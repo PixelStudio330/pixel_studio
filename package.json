@@ -1,0 +1,11 @@
+{
+  "name": "pixelx",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix pixel-backend\" \"npm run dev --prefix pixel-frontend\""
+  }
+}
