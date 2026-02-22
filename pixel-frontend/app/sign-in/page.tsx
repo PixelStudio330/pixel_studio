@@ -13,13 +13,11 @@ export default function SignIn() {
     e.preventDefault();
     setError("");
 
-    // For now, just a dummy check
     if (!email || !password) {
       setError("Please fill in both fields 😭");
       return;
     }
 
-    // 🔮 Replace this with your actual API call later
     try {
       const res = await fetch("/api/login", {
         method: "POST",
@@ -34,8 +32,13 @@ export default function SignIn() {
       alert("Logged in successfully! ✨");
 
       // TODO: redirect to dashboard or homepage
-    } catch (err: any) {
-      setError(err.message || "Something went wrong 😭");
+    } catch (err: unknown) {
+      // ✅ Fixed 'any' by checking if err is an instance of Error
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Something went wrong 😭");
+      }
     }
   };
 
@@ -97,7 +100,8 @@ export default function SignIn() {
         </form>
 
         <p className="mt-6 text-center text-sm text-[#743014]/80">
-          Don't have an account?{" "}
+          {/* ✅ Fixed unescaped apostrophe */}
+          Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-[#8A6674] font-semibold hover:underline">
             Sign Up
           </Link>

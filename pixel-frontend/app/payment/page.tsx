@@ -61,7 +61,7 @@ export default function PaymentPage() {
         className="max-w-3xl text-lg text-[#442D1C]/80 text-center mb-16"
       >
         Transparent, secure, and stress-free, just how payments should be 💸✨  
-        Here’s how our process works and the options we support.
+        Here&apos;s how our process works and the options we support.
       </motion.p>
 
       {/* 🌸 50/50 Policy Card */}
@@ -146,12 +146,12 @@ export default function PaymentPage() {
       <div className="max-w-3xl text-center">
         <p className="text-[#442D1C]/80 mb-6">
           After completing a payment, please send a <span className="font-bold text-[#743014]">screenshot </span>  
-           to our email so we can verify everything smoothly 💌
+          to our email so we can verify everything smoothly 💌
         </p>
 
         <p className="text-[#743014] font-semibold mb-8">
           ✨ Regular customers get <strong>special discounts </strong>  
-          depending on how many projects they've done with us.
+          depending on how many projects they&apos;ve done with us.
         </p>
 
         <Link href="/contact" className="inline-block">

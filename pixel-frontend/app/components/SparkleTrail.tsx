@@ -1,28 +1,44 @@
 "use client";
 import { useEffect, useRef } from "react";
 
+// 1. Defined a proper Interface to replace 'any'
+interface Particle {
+  x: number;
+  y: number;
+  size: number;
+  life: number;
+  speedX: number;
+  speedY: number;
+  color: string;
+  type: "star" | "sparkle";
+}
+
 export default function SparkleTrail() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particles: any[] = [];
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas!.getContext("2d")!;
-    let w = (canvas!.width = window.innerWidth);
-    let h = (canvas!.height = window.innerHeight);
+    if (!canvas) return; // Safety check
+
+    const ctx = canvas.getContext("2d")!;
+    // 2. Moved particles inside useEffect to fix the dependency warning
+    const particles: Particle[] = [];
+    
+    let w = (canvas.width = window.innerWidth);
+    let h = (canvas.height = window.innerHeight);
 
     const resize = () => {
-      w = canvas!.width = window.innerWidth;
-      h = canvas!.height = window.innerHeight;
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
     };
     window.addEventListener("resize", resize);
 
     const mouse = { x: 0, y: 0 };
-    window.addEventListener("mousemove", (e) => {
-      mouse.x = e.x;
-      mouse.y = e.y;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
 
-      // ✨ Reduced sparkle count: 1–2 per move instead of 3–5
       const count = Math.random() > 0.6 ? 2 : 1;
       for (let i = 0; i < count; i++) {
         particles.push({
@@ -36,7 +52,9 @@ export default function SparkleTrail() {
           type: Math.random() > 0.8 ? "star" : "sparkle",
         });
       }
-    });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
 
     function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
       ctx.save();
@@ -56,16 +74,22 @@ export default function SparkleTrail() {
       ctx.restore();
     }
 
+    let animationFrameId: number;
+
     const animate = () => {
       ctx.clearRect(0, 0, w, h);
 
-      particles.forEach((p, i) => {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
         p.x += p.speedX;
         p.y += p.speedY;
         p.life -= 0.02;
         p.size *= 0.97;
 
-        if (p.life <= 0 || p.size <= 0.2) particles.splice(i, 1);
+        if (p.life <= 0 || p.size <= 0.2) {
+          particles.splice(i, 1);
+          continue;
+        }
 
         ctx.globalAlpha = p.life;
         ctx.fillStyle = p.color;
@@ -79,14 +103,19 @@ export default function SparkleTrail() {
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           ctx.fill();
         }
-      });
+      }
 
-      requestAnimationFrame(animate);
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     animate();
-    return () => window.removeEventListener("resize", resize);
-  }, []);
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", handleMouseMove);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []); // particles is no longer a dependency because it's local!
 
   return (
     <canvas
