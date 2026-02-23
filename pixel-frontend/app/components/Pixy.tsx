@@ -15,13 +15,13 @@ export default function Pixy() {
   // 💭 Fetch Gemini thoughts from backend
   async function getPixyReply(message: string) {
     try {
-      const res = await fetch("http://localhost:5000/mascot", {
+      const res = await fetch("/api/mascot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
       const data = await res.json();
-      return data.reply || "…";
+return data.text || "…"; // ✅ This matches your route.ts!
     } catch (err) {
       console.error("Pixy fetch error:", err);
       return "…";

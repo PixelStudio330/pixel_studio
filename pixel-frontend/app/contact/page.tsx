@@ -29,6 +29,7 @@ export default function ContactPage() {
   };
 
   const handleSubmit = async () => {
+    // 1. Client-side validation
     if (!form.name || !form.email || !form.message) {
       setToast({ message: "Fill all fields, you cute clown 😭", type: "error" });
       return;
@@ -37,34 +38,40 @@ export default function ContactPage() {
     setLoading(true);
 
     try {
+      // 2. Prepare FormData (Matches your route.ts req.formData() expectation)
       const formData = new FormData();
       formData.append("name", form.name);
       formData.append("email", form.email);
       formData.append("message", form.message);
+      
       if (image) {
         formData.append("image", image);
       }
 
-      const res = await fetch("http://localhost:5000/send-email", {
+      // 3. Post to the internal Next.js API route
+      const res = await fetch("/api/send-email", {
         method: "POST",
-        body: formData,
+        // Note: Do NOT add headers here. The browser sets the multipart boundary automatically.
+        body: formData, 
       });
 
       const data = await res.json();
 
-      if (data.success) {
+      if (res.ok && data.success) {
         setToast({ message: "Message sent successfully! 💌✨", type: "success" });
+        // Reset form
         setForm({ name: "", email: "", message: "" });
         setImage(null);
         setPreview(null);
       } else {
-        setToast({ message: "Error sending message 💀", type: "error" });
+        setToast({ message: data.error || "Error sending message 💀", type: "error" });
       }
     } catch (error) {
+      console.error("Submission error:", error);
       setToast({ message: "Server unreachable 😭", type: "error" });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -149,7 +156,12 @@ export default function ContactPage() {
 
           <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm mb-6 border border-[#8A6674]/20">
             <ImageIcon className="text-[#8A6674]" />
-            <input type="file" accept="image/*" onChange={handleImage} className="text-[#604C39]" />
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleImage} 
+              className="text-[#604C39] text-xs file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:bg-[#8A6674] file:text-white hover:file:bg-[#604C39]" 
+            />
           </div>
 
           {/* Preview */}
