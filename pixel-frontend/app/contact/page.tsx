@@ -7,10 +7,7 @@ import SparkleTrail from "../components/SparkleTrail";
 import nextDynamic from "next/dynamic"; 
 import Toast from "../components/Toast";
 
-// ✅ Next.js 15 Config
-export const dynamic = 'force-dynamic';
-
-// Load Doodles only on client side
+// Load Doodles only on client side to keep initial load light
 const Doodles = nextDynamic(() => import("../components/Doodles"), { ssr: false });
 
 export default function ContactPage() {
@@ -19,23 +16,19 @@ export default function ContactPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type?: "success" | "error" } | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  // ✅ FORCED SCROLL RESET (The "Nuclear" Option)
+  // ✅ SMOOTH MOUNT & SCROLL RESET
   useEffect(() => {
-    // 1. Disable the browser's attempt to stay at the previous scroll position
+    setMounted(true);
+    
+    // Disable the browser's "sticky" scroll memory
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
 
-    // 2. Immediate jump to top
-    window.scrollTo(0, 0);
-
-    // 3. Backup: tiny delay to ensure the DOM has finished painting
-    const timeout = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }, 0);
-
-    return () => clearTimeout(timeout);
+    // Jump to top instantly without blocking the UI thread
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -91,6 +84,9 @@ export default function ContactPage() {
     }
   };
 
+  // Prevents stalling by ensuring the layout is ready before rendering heavy elements
+  if (!mounted) return <div className="min-h-screen bg-[#D9E0A4]" />;
+
   return (
     <main className="relative min-h-screen bg-[#D9E0A4] text-[#8C5383] overflow-hidden">
       <SparkleTrail />
@@ -101,9 +97,9 @@ export default function ContactPage() {
 
       <section className="relative z-10 flex flex-col items-center justify-center text-center pt-32 px-6 md:px-10">
         <motion.h1
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
+          transition={{ duration: 0.5 }}
           className="text-4xl md:text-6xl font-extrabold text-[#604C39] mb-6"
         >
           Get In Touch 🌿
@@ -112,7 +108,7 @@ export default function ContactPage() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.2 }}
           className="text-lg md:text-xl max-w-2xl mb-12 text-[#8A6674]"
         >
           Looking for a customized website? Fill out the form — let’s create something beautiful,
@@ -120,97 +116,100 @@ export default function ContactPage() {
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
           className="w-full max-w-xl bg-gradient-to-br from-[#EDF3C5] to-[#D9E0A4] rounded-3xl shadow-xl p-10 border border-[#8A6674]/30"
         >
-          {/* Name */}
-          <label className="block text-left text-[#604C39] font-semibold mb-2">Name</label>
-          <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm mb-6 border border-[#8A6674]/20">
-            <User className="text-[#8A6674]" />
-            <input
-              type="text"
-              name="name"
-              placeholder="Your Name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full outline-none bg-transparent text-[#604C39]"
-            />
-          </div>
-
-          {/* Email */}
-          <label className="block text-left text-[#604C39] font-semibold mb-2">Email</label>
-          <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm mb-6 border border-[#8A6674]/20">
-            <Mail className="text-[#8A6674]" />
-            <input
-              type="email"
-              name="email"
-              placeholder="Your Email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full outline-none bg-transparent text-[#604C39]"
-            />
-          </div>
-
-          {/* Message */}
-          <label className="block text-left text-[#604C39] font-semibold mb-2">Message</label>
-          <div className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 shadow-sm mb-8 border border-[#8A6674]/20">
-            <MessageSquare className="text-[#8A6674] mt-1" />
-            <textarea
-              name="message"
-              placeholder="Tell me about your dream project..."
-              value={form.message}
-              onChange={handleChange}
-              className="w-full h-28 outline-none bg-transparent text-[#604C39] resize-none"
-            />
-          </div>
-
-          {/* Image Upload */}
-          <label className="block text-left text-[#604C39] font-semibold mb-2">
-            Attachment (optional)
-          </label>
-
-          <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm mb-6 border border-[#8A6674]/20">
-            <ImageIcon className="text-[#8A6674]" />
-            <input 
-              type="file" 
-              accept="image/*" 
-              onChange={handleImage} 
-              className="text-[#604C39] text-xs file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:bg-[#8A6674] file:text-white hover:file:bg-[#604C39]" 
-            />
-          </div>
-
-          {/* Preview */}
-          {preview && (
-            <div className="mb-6">
-              <img
-                src={preview}
-                alt="Preview"
-                className="w-full rounded-2xl shadow-md border border-[#8A6674]/20"
-              />
+          {/* Form Fields */}
+          <div className="space-y-6">
+            <div>
+              <label className="block text-left text-[#604C39] font-semibold mb-2">Name</label>
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-[#8A6674]/20">
+                <User className="text-[#8A6674]" size={20} />
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your Name"
+                  value={form.name}
+                  onChange={handleChange}
+                  className="w-full outline-none bg-transparent text-[#604C39]"
+                />
+              </div>
             </div>
-          )}
 
-          {/* Submit */}
-          <motion.button
-            whileHover={{ scale: 1.05, rotate: -1 }}
-            whileTap={{ scale: 0.95 }}
-            disabled={loading}
-            onClick={handleSubmit}
-            className="w-full bg-[#8A6674] text-[#FFF8F3] px-6 py-3 rounded-full font-semibold hover:bg-[#604C39] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {loading ? "Sending..." : "Send Message"} <Send size={20} />
-          </motion.button>
+            <div>
+              <label className="block text-left text-[#604C39] font-semibold mb-2">Email</label>
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-[#8A6674]/20">
+                <Mail className="text-[#8A6674]" size={20} />
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Your Email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className="w-full outline-none bg-transparent text-[#604C39]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-left text-[#604C39] font-semibold mb-2">Message</label>
+              <div className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-[#8A6674]/20">
+                <MessageSquare className="text-[#8A6674] mt-1" size={20} />
+                <textarea
+                  name="message"
+                  placeholder="Tell me about your dream project..."
+                  value={form.message}
+                  onChange={handleChange}
+                  className="w-full h-28 outline-none bg-transparent text-[#604C39] resize-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-left text-[#604C39] font-semibold mb-2">
+                Attachment (optional)
+              </label>
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-[#8A6674]/20">
+                <ImageIcon className="text-[#8A6674]" size={20} />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImage} 
+                  className="text-[#604C39] text-xs file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:bg-[#8A6674] file:text-white hover:file:bg-[#604C39] transition-colors" 
+                />
+              </div>
+            </div>
+
+            {preview && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2">
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-full rounded-2xl shadow-md border border-[#8A6674]/20"
+                />
+              </motion.div>
+            )}
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              disabled={loading}
+              onClick={handleSubmit}
+              className="w-full bg-[#8A6674] text-[#FFF8F3] px-6 py-4 rounded-full font-semibold hover:bg-[#604C39] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed mt-4"
+            >
+              {loading ? "Sending..." : "Send Message"} <Send size={20} />
+            </motion.button>
+          </div>
         </motion.div>
       </section>
 
-      {/* Divider */}
+      {/* Aesthetic Divider */}
       <motion.div
-        initial={{ y: 0 }}
-        animate={{ y: [0, -10, 0, 10, 0] }}
+        animate={{ y: [0, -5, 0, 5, 0] }}
         transition={{ duration: 4, repeat: Infinity }}
-        className="text-center text-[#8A6674] text-3xl my-16"
+        className="text-center text-[#8A6674] text-3xl my-20"
       >
         ︵‿︵‿୨♡୧‿︵‿︵
       </motion.div>

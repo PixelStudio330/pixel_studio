@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import SparkleTrail from "../components/SparkleTrail";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
-export const dynamic = 'force-dynamic';
+// Removed router.refresh() and pageKey randomization to stop the stalling.
 
 interface ProjectCardProps {
   name: string;
@@ -37,21 +36,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   const currentLink = isCarousel && Array.isArray(link) ? link[currentIndex] : link as string;
   const currentTitle = isCarousel && pageTitles ? pageTitles[currentIndex] : "";
 
-  // Reset loader on video change
   useEffect(() => {
     setIsVideoLoading(true);
-    const timer = setTimeout(() => setIsVideoLoading(false), 3000); // 3s Fallback
+    const timer = setTimeout(() => setIsVideoLoading(false), 3000); 
     return () => clearTimeout(timer);
   }, [currentVideo]);
 
-  // Force video reload on source change
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.load();
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => console.log("Autoplay waiting for user interaction"));
-      }
+      videoRef.current.play().catch(() => {});
     }
   }, [currentVideo]);
 
@@ -69,7 +63,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 
   return (
     <motion.div 
-      layout
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.6 }}
       className="relative w-full max-w-5xl bg-gradient-to-br from-[#FFF8F3] to-[#F4E8D4] border border-[#8A6674]/20 rounded-3xl overflow-hidden shadow-lg mx-auto"
     >
       <div
@@ -85,14 +82,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               exit={{ opacity: 0 }}
               className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#F4E8D4]"
             >
-              <motion.div 
-                animate={{ scale: [1, 1.1, 1], opacity: [0.7, 1, 0.7] }}
-                transition={{ repeat: Infinity, duration: 1 }}
-                className="text-[#8C5383] font-bold flex flex-col items-center gap-2"
-              >
-                <span className="text-3xl">✨</span>
+              <div className="text-[#8C5383] font-bold flex flex-col items-center gap-2">
+                <span className="text-3xl animate-bounce">✨</span>
                 <span className="tracking-widest text-xs uppercase">Loading...</span>
-              </motion.div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -112,20 +105,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </AnimatePresence>
 
         {isCarousel && (
-          <>
-            <button
-              onClick={handlePrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/80 text-white p-3 rounded-full z-30 transition-all shadow-lg active:scale-90"
-            >
-              <FaChevronLeft size={18} />
-            </button>
-            <button
-              onClick={handleNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/80 text-white p-3 rounded-full z-30 transition-all shadow-lg active:scale-90"
-            >
-              <FaChevronRight size={18} />
-            </button>
-          </>
+          <div className="absolute inset-0 flex items-center justify-between px-4 z-30 pointer-events-none">
+            <button onClick={handlePrev} className="pointer-events-auto bg-[#8C5383]/80 text-white p-3 rounded-full transition-all active:scale-90"><FaChevronLeft size={18} /></button>
+            <button onClick={handleNext} className="pointer-events-auto bg-[#8C5383]/80 text-white p-3 rounded-full transition-all active:scale-90"><FaChevronRight size={18} /></button>
+          </div>
         )}
 
         {currentVideo && currentVideo !== "#" ? (
@@ -133,19 +116,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             ref={videoRef}
             key={currentVideo} 
             src={currentVideo}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
+            autoPlay loop muted playsInline preload="auto"
             onLoadedData={() => setIsVideoLoading(false)}
             className={`object-contain w-full h-full pointer-events-none transition-opacity duration-500 ${isVideoLoading ? 'opacity-0' : 'opacity-100'}`}
           />
         ) : (
-          <div className="flex flex-col items-center justify-center w-full h-full text-[#8C5383]/40 font-bold text-lg gap-3">
-            <span className="text-4xl">💻</span>
-            Coming Soon
-          </div>
+          <div className="flex flex-col items-center justify-center w-full h-full text-[#8C5383]/40 font-bold text-lg">Coming Soon</div>
         )}
       </div>
 
@@ -155,25 +131,15 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           <p className="text-[#442D1C]/80 mb-5 text-sm md:text-base leading-relaxed">{desc}</p>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag, i) => (
-              <span key={i} className="bg-[#F5E6C7] text-[#84592B] px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
-                {tag}
-              </span>
+              <span key={i} className="bg-[#F5E6C7] text-[#84592B] px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">{tag}</span>
             ))}
           </div>
         </div>
 
         {currentLink && currentLink !== "#" ? (
-          <Link
-            href={currentLink}
-            target="_blank"
-            className="mt-6 inline-block text-center bg-[#8C5383] text-[#FFF8F3] font-semibold px-6 py-3 rounded-full hover:bg-[#743014] transition-all duration-300 shadow-lg"
-          >
-            Visit Project ✨
-          </Link>
+          <Link href={currentLink} target="_blank" className="mt-6 inline-block text-center bg-[#8C5383] text-[#FFF8F3] font-semibold px-6 py-3 rounded-full hover:bg-[#743014] transition-all duration-300 shadow-lg">Visit Project ✨</Link>
         ) : (
-          <div className="mt-6 inline-block text-center bg-[#8C5383]/10 text-[#743014]/30 font-semibold px-6 py-3 rounded-full cursor-not-allowed border border-dashed border-[#8C5383]/20">
-            Coming Soon
-          </div>
+          <div className="mt-6 inline-block text-center bg-[#8C5383]/10 text-[#743014]/30 font-semibold px-6 py-3 rounded-full border border-dashed border-[#8C5383]/20">Coming Soon</div>
         )}
       </div>
     </motion.div>
@@ -181,28 +147,22 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 };
 
 export default function ProjectsPage() {
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [pageKey, setPageKey] = useState("");
 
   useEffect(() => {
-    // 1. Clear cache and force re-render
-    setPageKey(`projects-${Date.now()}`);
     setMounted(true);
-    router.refresh();
-
-    // 2. Fix scroll position
+    // Standardize scroll behavior without blocking navigation
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
-    window.scrollTo(0, 0);
-  }, [router]);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
 
-  // Prevents Hydration error while forcing the new key
+  // Use a static key or no key at all to prevent re-mounting the entire page on nav
   if (!mounted) return <div className="min-h-screen bg-[#D9E0A4]" />;
 
   return (
-    <main key={pageKey} className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-20 px-4 md:px-12 relative overflow-hidden flex flex-col items-center space-y-12 md:space-y-20">
+    <main className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-20 px-4 md:px-12 relative overflow-hidden flex flex-col items-center space-y-12 md:space-y-20">
       <SparkleTrail />
       
       <div className="text-center z-10 max-w-3xl mt-10">

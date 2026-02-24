@@ -9,9 +9,6 @@ import { Mail, Lock, LogIn, ArrowRight } from "lucide-react";
 import nextDynamic from "next/dynamic";
 import SparkleTrail from "../components/SparkleTrail";
 
-// ✅ Next.js 15 Config: Ensure fresh data on refresh
-export const dynamic = 'force-dynamic';
-
 // Load Doodles only on client side
 const Doodles = nextDynamic(() => import("../components/Doodles"), { ssr: false });
 
@@ -20,21 +17,19 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  // ✅ FORCED SCROLL RESET (Consistent with other pages)
+  // ✅ SMOOTH MOUNT & INSTANT SCROLL
   useEffect(() => {
+    setMounted(true);
+    
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
 
-    window.scrollTo(0, 0);
-
-    const timeout = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }, 0);
-
-    return () => clearTimeout(timeout);
+    // Jump to top immediately without blocking the UI thread
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,7 +45,6 @@ export default function RegisterPage() {
       });
 
       if (res.ok) {
-        // Redirect to the login page after successful registration
         router.push("/api/auth/signin"); 
       } else {
         const data = await res.json();
@@ -62,6 +56,9 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
+
+  // Prevents "Hydration" flickering and UI stalls
+  if (!mounted) return <div className="min-h-screen bg-[#D9E0A4]" />;
 
   return (
     <main className="relative min-h-screen bg-[#D9E0A4] flex items-center justify-center px-4 overflow-hidden">
@@ -75,17 +72,17 @@ export default function RegisterPage() {
       </div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
         className="relative z-10 w-full max-w-md bg-gradient-to-br from-[#EDF3C5] to-[#D9E0A4] p-10 rounded-[2.5rem] shadow-2xl border border-[#8A6674]/30"
       >
         <div className="text-center mb-8">
           <motion.h2 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-4xl font-extrabold text-[#604C39] mb-2"
+            transition={{ delay: 0.1 }}
+            className="text-4xl font-extrabold text-[#604C39] mb-2 tracking-tight"
           >
             Join Pixel Studio ✨
           </motion.h2>
@@ -120,46 +117,48 @@ export default function RegisterPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="text-red-500 text-sm text-center font-bold bg-red-50 p-2 rounded-lg"
+                className="text-red-500 text-xs text-center font-bold bg-red-50 p-2 rounded-lg"
               >
                 {error}
               </motion.p>
             )}
           </AnimatePresence>
 
-          <div>
-            <label className="block text-left text-[#604C39] font-bold mb-2 ml-1 text-sm">Email Address</label>
-            <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-inner border border-[#8A6674]/10 focus-within:ring-2 focus-within:ring-[#19485F]/20 transition-all">
-              <Mail className="text-[#8A6674]" size={20} />
-              <input
-                type="email"
-                placeholder="you@example.com"
-                className="w-full outline-none bg-transparent text-[#604C39] placeholder:text-gray-400"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-left text-[#604C39] font-bold mb-2 ml-1 text-sm">Email Address</label>
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-inner border border-[#8A6674]/10 focus-within:ring-2 focus-within:ring-[#19485F]/20 transition-all">
+                <Mail className="text-[#8A6674]" size={18} />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  className="w-full outline-none bg-transparent text-[#604C39] placeholder:text-gray-400 text-sm"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-left text-[#604C39] font-bold mb-2 ml-1 text-sm">Password</label>
-            <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-inner border border-[#8A6674]/10 focus-within:ring-2 focus-within:ring-[#19485F]/20 transition-all">
-              <Lock className="text-[#8A6674]" size={20} />
-              <input
-                type="password"
-                placeholder="••••••••"
-                className="w-full outline-none bg-transparent text-[#604C39] placeholder:text-gray-400"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+            <div>
+              <label className="block text-left text-[#604C39] font-bold mb-2 ml-1 text-sm">Password</label>
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-inner border border-[#8A6674]/10 focus-within:ring-2 focus-within:ring-[#19485F]/20 transition-all">
+                <Lock className="text-[#8A6674]" size={18} />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  className="w-full outline-none bg-transparent text-[#604C39] placeholder:text-gray-400 text-sm"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
             </div>
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.03, rotate: -1 }}
-            whileTap={{ scale: 0.97 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={loading}
             className="w-full bg-[#19485F] text-[#F9F7F1] p-4 rounded-2xl font-extrabold hover:bg-[#19485F]/90 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-70 mt-4"
@@ -170,7 +169,7 @@ export default function RegisterPage() {
         </form>
 
         <div className="mt-8 text-center">
-          <p className="text-[#8A6674] font-medium">
+          <p className="text-[#8A6674] font-medium text-sm">
             Already a member?{" "}
             <Link href="/api/auth/signin" className="text-[#19485F] font-bold hover:underline decoration-2">
               Log In here 💌
@@ -180,9 +179,13 @@ export default function RegisterPage() {
       </motion.div>
 
       {/* Decorative Bottom Divider */}
-      <div className="absolute bottom-10 left-0 w-full text-center text-[#8A6674] text-2xl opacity-50 pointer-events-none">
+      <motion.div 
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 4, repeat: Infinity }}
+        className="absolute bottom-10 left-0 w-full text-center text-[#8A6674] text-2xl opacity-40 pointer-events-none"
+      >
         ︵‿︵‿୨♡୧‿︵‿︵
-      </div>
+      </motion.div>
     </main>
   );
 }

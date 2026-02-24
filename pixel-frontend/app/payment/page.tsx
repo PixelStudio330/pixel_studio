@@ -1,32 +1,26 @@
 "use client";
 
-import React, { useEffect } from "react"; 
+import React, { useState, useEffect } from "react"; 
 import { motion } from "framer-motion";
 import SparkleTrail from "../components/SparkleTrail";
 import { Wallet, Landmark, Wrench, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-// ✅ Next.js 15 Config: Ensure the page is always fresh
-export const dynamic = 'force-dynamic';
-
 export default function PaymentPage() {
-  // ✅ FORCED SCROLL RESET (The "Nuclear" Option)
+  const [mounted, setMounted] = useState(false);
+
+  // ✅ SMOOTH MOUNT & INSTANT SCROLL
   useEffect(() => {
-    // 1. Disable the browser's attempt to stay at the previous scroll position
+    setMounted(true);
+    
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
-
-    // 2. Immediate jump to top
-    window.scrollTo(0, 0);
-
-    // 3. Backup: ensures the DOM has finished painting before final jump
-    const timeout = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }, 0);
-
-    return () => clearTimeout(timeout);
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
+
+  // Prevents "Hydration" flickering and stalls
+  if (!mounted) return <div className="min-h-screen bg-[#D9E0A4]" />;
 
   return (
     <main className="min-h-screen bg-[#D9E0A4] text-[#743014] flex flex-col items-center p-10 relative overflow-hidden">
@@ -57,7 +51,7 @@ export default function PaymentPage() {
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
-              className="absolute text-3xl"
+              className="absolute text-3xl opacity-40"
               style={style}
             >
               {icon}
@@ -68,118 +62,115 @@ export default function PaymentPage() {
 
       {/* 🌸 Title */}
       <motion.h1
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-5xl md:text-6xl font-bold drop-shadow-lg text-center mt-20 text-[#8C5383]"
+        transition={{ duration: 0.5 }}
+        className="text-5xl md:text-7xl font-black drop-shadow-lg text-center mt-20 text-[#8C5383] tracking-tight"
       >
-        Payment Method & Information
+        Payment Info
       </motion.h1>
 
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.7 }}
-        className="max-w-3xl text-lg text-[#442D1C]/80 text-center mb-16"
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="max-w-3xl text-lg md:text-xl text-[#442D1C]/80 text-center mb-16 font-medium"
       >
-        Transparent, secure, and stress-free, just how payments should be 💸✨  
-        Here&apos;s how our process works and the options we support.
+        Transparent, secure, and stress-free. 💸✨ <br className="hidden md:block"/>
+        Here&apos;s how our process works.
       </motion.p>
 
       {/* 🌸 50/50 Policy Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        className="bg-[#FFF8F3] border border-[#8A6674]/20 rounded-3xl p-8 max-w-3xl text-center shadow-lg mb-16"
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        className="bg-[#FFF8F3] border border-[#8A6674]/20 rounded-3xl p-8 max-w-3xl text-center shadow-lg mb-16 z-10"
       >
         <h2 className="text-3xl font-bold mb-4 text-[#743014]">Our Payment Policy</h2>
         <p className="text-[#442D1C]/80 text-base leading-relaxed">
-          To avoid wasted time and last-minute cancellations, we follow a simple rule:
+          To ensure total commitment and zero delays, we follow a simple 50/50 rule:
         </p>
 
-        <div className="mt-6 space-y-3 text-[#743014] font-semibold">
-          <p>📌 <span className="font-bold">50% upfront</span> before the project starts.</p>
-          <p>📌 <span className="font-bold">50% after delivery</span> once you receive the project fully.</p>
+        <div className="mt-6 space-y-4 text-[#743014] font-bold text-lg">
+          <p className="flex items-center justify-center gap-2">
+            <span className="text-[#8C5383]">01.</span> 50% Upfront Deposit
+          </p>
+          <p className="flex items-center justify-center gap-2">
+            <span className="text-[#8C5383]">02.</span> 50% Upon Final Delivery
+          </p>
         </div>
 
-        <p className="mt-6 text-[#8C5383]/80">
-          This keeps everything fair for both sides and ensures we can give you our best work ✨
+        <p className="mt-8 text-[#8C5383] font-medium italic">
+          Keeping it fair, professional, and exciting! ✨
         </p>
       </motion.div>
 
       {/* 🌸 Divider */}
       <motion.div
-        animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 4, repeat: Infinity }}
-        className="text-3xl md:text-4xl font-bold text-[#8C5383] mb-16"
+        animate={{ y: [0, -5, 0] }}
+        transition={{ duration: 3, repeat: Infinity }}
+        className="text-3xl text-[#8C5383] mb-16 opacity-50"
       >
         ✿━━━━━━━━━━━━✿
       </motion.div>
 
       {/* 🌸 Payment Methods */}
-      <div className="grid gap-12 md:grid-cols-3 w-full max-w-6xl mb-20">
+      <div className="grid gap-8 md:grid-cols-3 w-full max-w-6xl mb-20 z-10">
 
-        {/* BKASH (Active) */}
+        {/* BKASH */}
         <motion.div
-          whileHover={{ scale: 1.06, boxShadow: "0 20px 40px rgba(0,0,0,0.25)" }}
-          className="bg-gradient-to-br from-[#FFF8F3] to-[#F4E8D4] rounded-3xl p-8 flex flex-col items-center border border-[#8A6674]/20 text-center"
+          whileHover={{ y: -10 }}
+          className="bg-white/60 backdrop-blur-md rounded-3xl p-8 flex flex-col items-center border border-[#8A6674]/10 text-center shadow-sm"
         >
-          <Wallet className="w-12 h-12 mb-4 text-[#743014]" />
-          <h3 className="text-2xl font-bold mb-2">Bkash</h3>
-          <p className="text-[#442D1C]/80 text-sm mb-4">Fast, secure, and available anytime.</p>
-          <p className="font-semibold text-[#8C5383]">Account: 01XXXXXXXXX</p>
+          <div className="bg-[#8C5383]/10 p-4 rounded-2xl mb-4">
+             <Wallet className="w-8 h-8 text-[#8C5383]" />
+          </div>
+          <h3 className="text-2xl font-bold mb-2 text-[#743014]">bKash</h3>
+          <p className="text-[#442D1C]/80 text-sm mb-4">Fast & secure mobile transfer.</p>
+          <p className="font-bold text-[#8C5383] bg-white px-4 py-1 rounded-full text-sm">01XXXXXXXXX</p>
         </motion.div>
 
-        {/* BANK (Active) */}
+        {/* BANK */}
         <motion.div
-          whileHover={{ scale: 1.06, boxShadow: "0 20px 40px rgba(0,0,0,0.25)" }}
-          className="bg-gradient-to-br from-[#FFF8F3] to-[#F4E8D4] rounded-3xl p-8 flex flex-col items-center border border-[#8A6674]/20 text-center"
+          whileHover={{ y: -10 }}
+          className="bg-white/60 backdrop-blur-md rounded-3xl p-8 flex flex-col items-center border border-[#8A6674]/10 text-center shadow-sm"
         >
-          <Landmark className="w-12 h-12 mb-4 text-[#743014]" />
-          <h3 className="text-2xl font-bold mb-2">Bank Transfer</h3>
-          <p className="text-[#442D1C]/80 text-sm mb-4">Best for clients who prefer official documentation.</p>
-          <p className="font-semibold text-[#8C5383]">Bank: BRAC Bank</p>
-          <p className="font-semibold text-[#8C5383]">Acc No: XXXX-XXXX</p>
+          <div className="bg-[#8C5383]/10 p-4 rounded-2xl mb-4">
+             <Landmark className="w-8 h-8 text-[#8C5383]" />
+          </div>
+          <h3 className="text-2xl font-bold mb-2 text-[#743014]">Bank Transfer</h3>
+          <p className="text-[#442D1C]/80 text-sm mb-4">Official bank-to-bank wire.</p>
+          <p className="font-bold text-[#8C5383] text-sm">BRAC BANK</p>
+          <p className="font-medium text-[#442D1C]/60 text-xs">Acc: XXXX-XXXX-XXXX</p>
         </motion.div>
 
-        {/* FUTURE METHODS – Under Construction */}
+        {/* FUTURE METHODS */}
         <motion.div
-          whileHover={{ scale: 1.04 }}
-          className="bg-[#EFE7DA] border border-[#8A6674]/20 rounded-3xl p-8 flex flex-col items-center text-center opacity-60"
+          className="bg-[#EFE7DA]/50 border border-dashed border-[#8A6674]/30 rounded-3xl p-8 flex flex-col items-center text-center opacity-70"
         >
-          <Wrench className="w-12 h-12 mb-4 text-[#743014]" />
-          <h3 className="text-2xl font-bold">More Coming Soon</h3>
-          <p className="text-[#442D1C]/70 text-sm">New payment options in development 🔧</p>
+          <Wrench className="w-8 h-8 mb-4 text-[#743014]/40" />
+          <h3 className="text-xl font-bold text-[#743014]/60">More Coming</h3>
+          <p className="text-[#442D1C]/50 text-xs">Stripe & PayPal soon 🔧</p>
         </motion.div>
 
       </div>
 
-      {/* 🌸 Divider */}
-      <motion.div
-        animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 4, repeat: Infinity }}
-        className="text-3xl md:text-4xl font-bold text-[#8C5383] mb-16"
-      >
-        ✿━━━━━━━━━━━━✿
-      </motion.div>
-
-      {/* 🌸 Notes + CTA */}
-      <div className="max-w-3xl text-center">
-        <p className="text-[#442D1C]/80 mb-6">
-          After completing a payment, please send a <span className="font-bold text-[#743014]">screenshot </span>  
-          to our email so we can verify everything smoothly 💌
+      {/* 🌸 Final Note + CTA */}
+      <div className="max-w-3xl text-center z-10 pb-20">
+        <p className="text-[#442D1C]/80 mb-6 text-sm md:text-base">
+          After payment, just drop us a <span className="font-bold text-[#743014]">screenshot</span> via email or WhatsApp. <br/>
+          We&apos;ll verify it and get the magic started immediately! 💌
         </p>
 
-        <p className="text-[#743014] font-semibold mb-8">
-          ✨ Regular customers get <strong>special discounts </strong>  
-          depending on how many projects they&apos;ve done with us.
-        </p>
-
-        <Link href="/contact" className="inline-block">
-          <button className="px-8 py-3 bg-[#8C5383] text-white rounded-full font-semibold shadow-md hover:scale-105 transition flex items-center gap-2 mx-auto">
-            Contact Us <ArrowRight className="w-5 h-5" />
-          </button>
+        <Link href="/contact">
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-10 py-4 bg-[#8C5383] text-[#FFF8F3] rounded-full font-bold shadow-xl hover:bg-[#743014] transition-all flex items-center gap-3 mx-auto"
+          >
+            Ready to Start? <ArrowRight className="w-5 h-5" />
+          </motion.button>
         </Link>
       </div>
 
