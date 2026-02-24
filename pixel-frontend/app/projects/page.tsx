@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import SparkleTrail from "../components/SparkleTrail";
@@ -28,7 +28,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   pageTitles,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
   const isCarousel = Array.isArray(videoSrc);
+
+  // Reset loading state whenever the video source changes
+  useEffect(() => {
+    setIsVideoLoading(true);
+  }, [currentIndex, videoSrc]);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -51,11 +57,32 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
       layout
       className="relative w-full max-w-5xl bg-gradient-to-br from-[#FFF8F3] to-[#F4E8D4] border border-[#8A6674]/20 rounded-3xl overflow-hidden shadow-lg mx-auto"
     >
-      {/* 🎬 Video Preview */}
+      {/* 🎬 Video Preview Container */}
       <div
-        className="relative w-full h-[460px] md:h-[480px] lg:h-[500px] overflow-hidden rounded-t-3xl flex items-start justify-center bg-black/5"
+        className="relative w-full h-[400px] md:h-[480px] lg:h-[500px] overflow-hidden rounded-t-3xl flex items-start justify-center bg-[#8C5383]/5"
         style={{ paddingTop: videoPaddingTop || "1.5rem" }}
       >
+        {/* ✨ Loading Overlay */}
+        <AnimatePresence>
+          {isVideoLoading && currentVideo && currentVideo !== "#" && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#F4E8D4]/80 backdrop-blur-sm"
+            >
+              <motion.div 
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+                className="text-[#8C5383] font-bold flex flex-col items-center gap-2"
+              >
+                <span className="text-3xl">✨</span>
+                <span className="tracking-widest text-sm uppercase">Loading Studio...</span>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Page title overlay */}
         <AnimatePresence mode="wait">
           {currentTitle && (
@@ -64,7 +91,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#8C5383]/80 text-[#FFF8F3] px-4 py-1 rounded-full font-semibold z-20 shadow-md backdrop-blur-sm"
+              className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#8C5383]/80 text-[#FFF8F3] px-4 py-1 rounded-full font-semibold z-20 shadow-md backdrop-blur-sm text-sm"
             >
               {currentTitle}
             </motion.div>
@@ -75,57 +102,50 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           <>
             <button
               onClick={handlePrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/60 hover:bg-[#8C5383] text-white p-3 rounded-full z-30 transition-all shadow-lg"
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/60 hover:bg-[#8C5383] text-white p-3 rounded-full z-30 transition-all shadow-lg active:scale-90"
             >
-              <FaChevronLeft size={20} />
+              <FaChevronLeft size={18} />
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/60 hover:bg-[#8C5383] text-white p-3 rounded-full z-30 transition-all shadow-lg"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/60 hover:bg-[#8C5383] text-white p-3 rounded-full z-30 transition-all shadow-lg active:scale-90"
             >
-              <FaChevronRight size={20} />
+              <FaChevronRight size={18} />
             </button>
           </>
         )}
 
         {currentVideo && currentVideo !== "#" ? (
-          <AnimatePresence mode="wait">
-            <motion.video
-              // 🔥 CRITICAL: Unique key per video source forces the browser to re-load the file
-              key={currentVideo} 
-              src={currentVideo}
-              autoPlay
-              loop
-              muted
-              playsInline
-              // Helps browser prioritize loading
-              preload="auto"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="object-contain w-full h-full pointer-events-none"
-              transition={{ duration: 0.4 }}
-            />
-          </AnimatePresence>
+          <motion.video
+            key={currentVideo} 
+            src={currentVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            onCanPlayThrough={() => setIsVideoLoading(false)} // 🔥 Hides loader when video is ready
+            className={`object-contain w-full h-full pointer-events-none transition-opacity duration-500 ${isVideoLoading ? 'opacity-0' : 'opacity-1'}`}
+          />
         ) : (
-          <div className="flex flex-col items-center justify-center w-full h-full text-[#8C5383]/50 font-bold text-xl gap-4">
-            <div className="text-4xl">⏳</div>
-            Coming Soon...
+          <div className="flex flex-col items-center justify-center w-full h-full text-[#8C5383]/40 font-bold text-lg gap-3">
+            <span className="text-4xl">💻</span>
+            Coming Soon
           </div>
         )}
       </div>
 
       {/* 📜 Details */}
-      <div className="p-8 flex flex-col justify-between bg-white/50 backdrop-blur-sm">
+      <div className="p-8 flex flex-col justify-between bg-white/40 backdrop-blur-md">
         <div>
-          <h3 className="text-3xl font-bold text-[#743014] mb-3">{name}</h3>
-          <p className="text-[#442D1C]/80 mb-5 text-base leading-relaxed">{desc}</p>
+          <h3 className="text-2xl md:text-3xl font-bold text-[#743014] mb-2">{name}</h3>
+          <p className="text-[#442D1C]/80 mb-5 text-sm md:text-base leading-relaxed">{desc}</p>
 
           <div className="flex flex-wrap gap-2">
             {tags.map((tag, i) => (
               <span
                 key={i}
-                className="bg-[#F5E6C7] text-[#84592B] px-3 py-1 rounded-full text-xs font-semibold tracking-wide"
+                className="bg-[#F5E6C7] text-[#84592B] px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase"
               >
                 {tag}
               </span>
@@ -137,12 +157,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           <Link
             href={currentLink}
             target="_blank"
-            className="mt-6 inline-block text-center bg-[#8C5383] text-[#FFF8F3] font-semibold px-6 py-2 rounded-full hover:bg-[#743014] transition-all duration-300 shadow-md"
+            className="mt-6 inline-block text-center bg-[#8C5383] text-[#FFF8F3] font-semibold px-6 py-3 rounded-full hover:bg-[#743014] transition-all duration-300 shadow-lg active:translate-y-1"
           >
-            Watch Demo ✨
+            Visit Project ✨
           </Link>
         ) : (
-          <div className="mt-6 inline-block text-center bg-[#8C5383]/20 text-[#743014]/40 font-semibold px-6 py-2 rounded-full cursor-not-allowed">
+          <div className="mt-6 inline-block text-center bg-[#8C5383]/10 text-[#743014]/30 font-semibold px-6 py-3 rounded-full cursor-not-allowed border border-dashed border-[#8C5383]/20">
             Coming Soon
           </div>
         )}
@@ -171,57 +191,59 @@ export default function ProjectsPage() {
   return (
     <main 
       key={pageKey}
-      className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-24 px-6 md:px-12 relative overflow-hidden flex flex-col items-center space-y-16"
+      className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-20 px-4 md:px-12 relative overflow-hidden flex flex-col items-center space-y-12 md:space-y-20"
     >
       <SparkleTrail />
 
-      {/* 🌸 Floating Icons */}
-      <div className="absolute inset-0 pointer-events-none overflow-visible">
-        {["🌸", "💫"].map((icon, i) => (
+      {/* 🌸 Floating Decor */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {["🌸", "💫", "✨"].map((icon, i) => (
           <motion.div
             key={i}
             animate={{
-              x: [-10, 10, -5, 5, 0],
-              y: [0, -10, 5, -5, 0],
-              rotate: [0, 360, 180, 270, 0],
+              y: [0, -20, 0],
+              rotate: [0, 10, -10, 0],
             }}
             transition={{
-              duration: 10 + i * 3,
+              duration: 5 + i,
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="absolute text-3xl md:text-4xl"
-            style={i === 0 ? { top: "15%", left: "12%" } : { top: "70%", left: "82%" }}
+            className="absolute text-2xl md:text-4xl opacity-60"
+            style={{
+              top: `${20 + i * 30}%`,
+              left: i % 2 === 0 ? "5%" : "90%",
+            }}
           >
             {icon}
           </motion.div>
         ))}
       </div>
 
-      <motion.h1
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-5xl font-bold text-[#8C5383] mb-6 text-center mt-10 drop-shadow-md"
-      >
-        Our Projects
-      </motion.h1>
+      <div className="text-center z-10 max-w-3xl mt-10">
+        <motion.h1
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-5xl md:text-7xl font-black text-[#8C5383] mb-4 drop-shadow-sm tracking-tight"
+        >
+          Our Projects
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="text-[#442D1C]/70 text-lg md:text-xl font-medium"
+        >
+          Where pixels get fancy and code finds its rhythm. 💃
+        </motion.p>
+      </div>
 
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.6 }}
-        className="text-[#442D1C]/80 text-center max-w-2xl mx-auto mb-14 text-lg"
-      >
-        A peek into our world — where design flirts with code and ideas sparkle like glitter 💅
-      </motion.p>
-
-      {/* 🧩 Projects List */}
-      <div className="w-full flex flex-col gap-20">
+      {/* 🧩 Projects Grid */}
+      <div className="w-full flex flex-col gap-16 md:gap-32 pb-20">
         <ProjectCard
           name="Pawsky Wawsky"
-          desc="A cozy sanctuary to find your best pet buddy built with a playful yet premium UI."
-          tags={["Web Design", "Responsive", "Pet Shop"]}
+          desc="Find your next furry soulmate. We designed a pet discovery experience that's as warm and fuzzy as a puppy's ears."
+          tags={["E-Commerce", "UX/UI", "Brand Identity"]}
           videoSrc={[
             "/videos/final-pawsky.mp4",
             "/videos/pawsky-babies.mp4",
@@ -230,14 +252,14 @@ export default function ProjectsPage() {
               "/videos/final-pawsky.mp4",
               "/videos/pawsky-babies.mp4",
           ]}
-          pageTitles={["Home", "Know Our Babies"]}
+          pageTitles={["Home Showcase", "Pet Gallery"]}
           videoPaddingTop="2rem"
         />
 
         <ProjectCard
           name="Pixel Code Studio"
-          desc="Our flagship creative demo — slide through all 5 pages!"
-          tags={["Next.js", "Animations", "Framer Motion"]}
+          desc="Our very own flagship showreel. A five-page journey through the sugar-coated world of high-end digital design."
+          tags={["Next.js 14", "Framer Motion", "Tailwind"]}
           videoSrc={[
             "/videos/sugar.mp4",
             "/videos/sugar-about.mp4",
@@ -252,14 +274,14 @@ export default function ProjectsPage() {
             "/videos/sugar-offer.mp4",
             "/videos/sugar-contact.mp4",
           ]}
-          pageTitles={["Home", "About", "Reviews", "Offers", "Contact"]}
+          pageTitles={["Lobby", "Legacy", "Love", "Treats", "Connect"]}
           videoPaddingTop="3rem"
         />
 
         <ProjectCard
-          name="Mystery Project"
-          desc="A secret brewing in our digital cauldron 👀 Stay tuned for the chaos reveal."
-          tags={["Coming Soon"]}
+          name="Project Chaos"
+          desc="Something bold is cooking in the studio. A top-secret collaboration that's about to break the internet."
+          tags={["Experimental", "Web3", "Coming Soon"]}
           videoPaddingTop="1.5rem"
         />
       </div>
