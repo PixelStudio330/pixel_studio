@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import nextdynamic from "next/dynamic";
 import { motion, useInView } from "framer-motion";
 import { ArrowRight, Code, Rocket, Zap } from "lucide-react";
@@ -8,12 +8,12 @@ import Link from "next/link";
 import SparkleTrail from "./components/SparkleTrail";
 import HeroText from "./components/HeroText";
 
-// ✅ Next.js 15 Config: Ensure the page is always fresh
+// ✅ Next.js 15 Config
 export const dynamic = 'force-dynamic';
 
 const Doodles = nextdynamic(() => import("./components/Doodles"), { ssr: false });
 
-// ✅ FeatureCard
+// ✅ FeatureCard (Kept your exact design)
 interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
@@ -33,7 +33,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, desc }) => (
   </motion.div>
 );
 
-// ✅ ServiceCard
+// ✅ ServiceCard (Kept your exact design)
 interface ServiceCardProps {
   icon: React.ReactNode;
   title: string;
@@ -59,7 +59,6 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ icon, title, desc }) => (
   </motion.div>
 );
 
-// 💫 Floating Text Divider
 const FloatingTextDivider = () => (
   <motion.div
     initial={{ y: 0 }}
@@ -72,29 +71,27 @@ const FloatingTextDivider = () => (
 );
 
 export default function Home() {
-  // ✅ FORCED SCROLL RESET (The "Nuclear" Option)
+  const [mounted, setMounted] = useState(false);
+  const featuresRef = useRef(null);
+  const servicesRef = useRef(null);
+
+  // ✅ FIX: Stalling & Scroll Glitch
   useEffect(() => {
-    // 1. Disable browser's native scroll restoration
+    setMounted(true);
+    
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
 
-    // 2. Immediate jump to top
-    window.scrollTo(0, 0);
-
-    // 3. Backup jump to handle delayed DOM painting
-    const timeout = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }, 0);
-
-    return () => clearTimeout(timeout);
+    // This ensures a fresh start without the "Nuclear" timeout lag
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
-
-  const featuresRef = useRef(null);
-  const servicesRef = useRef(null);
 
   const featuresInView = useInView(featuresRef, { once: true, margin: "-100px" });
   const servicesInView = useInView(servicesRef, { once: true, margin: "-100px" });
+
+  // Prevent heavy component initialization before mount
+  if (!mounted) return <div className="min-h-screen bg-[#D9E0A4]" />;
 
   return (
     <main className="relative min-h-screen bg-[#D9E0A4] text-[#8C5383] font-sans overflow-hidden">
@@ -128,23 +125,13 @@ export default function Home() {
             transition={{ delay: 0.6, duration: 0.7, ease: "easeOut" }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <motion.a
-              href="/contact"
-              whileHover={{ scale: 1.08, rotate: -1 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 bg-[#19485F] text-[#D9E0A4] px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-[#1E5A74] transition-all"
-            >
-              Get Started <ArrowRight size={22} />
-            </motion.a>
+            <Link href="/contact" className="inline-flex items-center gap-2 bg-[#19485F] text-[#D9E0A4] px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-[#1E5A74] transition-all">
+                Get Started <ArrowRight size={22} />
+            </Link>
 
-            <motion.a
-              href="/projects"
-              whileHover={{ scale: 1.08, rotate: 1 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 bg-[#8A6674] text-[#FFF8F3] px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-[#604C39] transition-all"
-            >
-              View Projects <ArrowRight size={22} />
-            </motion.a>
+            <Link href="/projects" className="inline-flex items-center gap-2 bg-[#8A6674] text-[#FFF8F3] px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-[#604C39] transition-all">
+                View Projects <ArrowRight size={22} />
+            </Link>
           </motion.div>
         </div>
       </section>
