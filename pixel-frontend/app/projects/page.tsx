@@ -29,12 +29,35 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const isCarousel = Array.isArray(videoSrc);
 
-  // Reset loading state whenever the video source changes
+  const currentVideo = isCarousel ? (videoSrc as string[])[currentIndex] : videoSrc as string;
+  const currentLink = isCarousel && Array.isArray(link) ? link[currentIndex] : link as string;
+  const currentTitle = isCarousel && pageTitles ? pageTitles[currentIndex] : "";
+
+  // 🔥 EFFECT 1: Reset loader when source changes and provide a fallback
   useEffect(() => {
     setIsVideoLoading(true);
-  }, [currentIndex, videoSrc]);
+    
+    // Fallback: If video takes longer than 3s, just show it anyway
+    const timer = setTimeout(() => {
+      setIsVideoLoading(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [currentVideo]);
+
+  // 🔥 EFFECT 2: Force play on source change (crucial for Safari/Mobile)
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.load();
+      videoRef.current.play().catch(() => {
+        // Autoplay was prevented, usually requires user click
+        console.log("Autoplay prevented");
+      });
+    }
+  }, [currentVideo]);
 
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -48,36 +71,32 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
     setCurrentIndex((prev) => (prev + 1) % (videoSrc as string[]).length);
   };
 
-  const currentVideo = isCarousel ? (videoSrc as string[])[currentIndex] : videoSrc as string;
-  const currentLink = isCarousel && Array.isArray(link) ? link[currentIndex] : link as string;
-  const currentTitle = isCarousel && pageTitles ? pageTitles[currentIndex] : "";
-
   return (
     <motion.div 
       layout
       className="relative w-full max-w-5xl bg-gradient-to-br from-[#FFF8F3] to-[#F4E8D4] border border-[#8A6674]/20 rounded-3xl overflow-hidden shadow-lg mx-auto"
     >
-      {/* 🎬 Video Preview Container */}
       <div
-        className="relative w-full h-[400px] md:h-[480px] lg:h-[500px] overflow-hidden rounded-t-3xl flex items-start justify-center bg-[#8C5383]/5"
+        className="relative w-full h-[400px] md:h-[480px] lg:h-[500px] overflow-hidden rounded-t-3xl flex items-start justify-center bg-black"
         style={{ paddingTop: videoPaddingTop || "1.5rem" }}
       >
         {/* ✨ Loading Overlay */}
         <AnimatePresence>
           {isVideoLoading && currentVideo && currentVideo !== "#" && (
             <motion.div 
+              key="loader"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#F4E8D4]/80 backdrop-blur-sm"
+              className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#F4E8D4]"
             >
               <motion.div 
-                animate={{ scale: [1, 1.1, 1] }}
+                animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
                 transition={{ repeat: Infinity, duration: 1.5 }}
                 className="text-[#8C5383] font-bold flex flex-col items-center gap-2"
               >
                 <span className="text-3xl">✨</span>
-                <span className="tracking-widest text-sm uppercase">Loading Studio...</span>
+                <span className="tracking-widest text-xs uppercase">Loading...</span>
               </motion.div>
             </motion.div>
           )}
@@ -91,7 +110,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#8C5383]/80 text-[#FFF8F3] px-4 py-1 rounded-full font-semibold z-20 shadow-md backdrop-blur-sm text-sm"
+              className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#8C5383]/90 text-[#FFF8F3] px-4 py-1 rounded-full font-semibold z-20 shadow-md backdrop-blur-sm text-xs"
             >
               {currentTitle}
             </motion.div>
@@ -102,13 +121,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           <>
             <button
               onClick={handlePrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/60 hover:bg-[#8C5383] text-white p-3 rounded-full z-30 transition-all shadow-lg active:scale-90"
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/80 text-white p-3 rounded-full z-30 transition-all shadow-lg active:scale-90"
             >
               <FaChevronLeft size={18} />
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/60 hover:bg-[#8C5383] text-white p-3 rounded-full z-30 transition-all shadow-lg active:scale-90"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-[#8C5383]/80 text-white p-3 rounded-full z-30 transition-all shadow-lg active:scale-90"
             >
               <FaChevronRight size={18} />
             </button>
@@ -116,7 +135,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         )}
 
         {currentVideo && currentVideo !== "#" ? (
-          <motion.video
+          <video
+            ref={videoRef}
             key={currentVideo} 
             src={currentVideo}
             autoPlay
@@ -124,8 +144,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             muted
             playsInline
             preload="auto"
-            onCanPlayThrough={() => setIsVideoLoading(false)} // 🔥 Hides loader when video is ready
-            className={`object-contain w-full h-full pointer-events-none transition-opacity duration-500 ${isVideoLoading ? 'opacity-0' : 'opacity-1'}`}
+            onLoadedData={() => setIsVideoLoading(false)} // 🔥 Switched to onLoadedData
+            className={`object-contain w-full h-full pointer-events-none transition-opacity duration-700 ${isVideoLoading ? 'opacity-0' : 'opacity-100'}`}
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-[#8C5383]/40 font-bold text-lg gap-3">
@@ -135,18 +155,13 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         )}
       </div>
 
-      {/* 📜 Details */}
-      <div className="p-8 flex flex-col justify-between bg-white/40 backdrop-blur-md">
+      <div className="p-8 flex flex-col justify-between bg-white/60 backdrop-blur-md">
         <div>
           <h3 className="text-2xl md:text-3xl font-bold text-[#743014] mb-2">{name}</h3>
           <p className="text-[#442D1C]/80 mb-5 text-sm md:text-base leading-relaxed">{desc}</p>
-
           <div className="flex flex-wrap gap-2">
             {tags.map((tag, i) => (
-              <span
-                key={i}
-                className="bg-[#F5E6C7] text-[#84592B] px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase"
-              >
+              <span key={i} className="bg-[#F5E6C7] text-[#84592B] px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase">
                 {tag}
               </span>
             ))}
@@ -157,12 +172,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           <Link
             href={currentLink}
             target="_blank"
-            className="mt-6 inline-block text-center bg-[#8C5383] text-[#FFF8F3] font-semibold px-6 py-3 rounded-full hover:bg-[#743014] transition-all duration-300 shadow-lg active:translate-y-1"
+            className="mt-6 inline-block text-center bg-[#8C5383] text-[#FFF8F3] font-semibold px-6 py-3 rounded-full hover:bg-[#743014] transition-all duration-300 shadow-lg"
           >
             Visit Project ✨
           </Link>
         ) : (
-          <div className="mt-6 inline-block text-center bg-[#8C5383]/10 text-[#743014]/30 font-semibold px-6 py-3 rounded-full cursor-not-allowed border border-dashed border-[#8C5383]/20">
+          <div className="mt-6 inline-block text-center bg-[#8C5383]/10 text-[#743014]/30 font-semibold px-6 py-3 rounded-full cursor-not-allowed border border-[#8C5383]/20">
             Coming Soon
           </div>
         )}
@@ -180,78 +195,27 @@ export default function ProjectsPage() {
     }
     window.scrollTo(0, 0);
     setPageKey(prev => prev + 1);
-
-    const timeout = setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    }, 50);
-
-    return () => clearTimeout(timeout);
   }, []);
 
   return (
-    <main 
-      key={pageKey}
-      className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-20 px-4 md:px-12 relative overflow-hidden flex flex-col items-center space-y-12 md:space-y-20"
-    >
+    <main key={pageKey} className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-20 px-4 md:px-12 relative overflow-hidden flex flex-col items-center space-y-12 md:space-y-20">
       <SparkleTrail />
-
-      {/* 🌸 Floating Decor */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {["🌸", "💫", "✨"].map((icon, i) => (
-          <motion.div
-            key={i}
-            animate={{
-              y: [0, -20, 0],
-              rotate: [0, 10, -10, 0],
-            }}
-            transition={{
-              duration: 5 + i,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-            className="absolute text-2xl md:text-4xl opacity-60"
-            style={{
-              top: `${20 + i * 30}%`,
-              left: i % 2 === 0 ? "5%" : "90%",
-            }}
-          >
-            {icon}
-          </motion.div>
-        ))}
-      </div>
-
       <div className="text-center z-10 max-w-3xl mt-10">
-        <motion.h1
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-5xl md:text-7xl font-black text-[#8C5383] mb-4 drop-shadow-sm tracking-tight"
-        >
+        <motion.h1 className="text-5xl md:text-7xl font-black text-[#8C5383] mb-4 tracking-tight">
           Our Projects
         </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-[#442D1C]/70 text-lg md:text-xl font-medium"
-        >
+        <p className="text-[#442D1C]/70 text-lg md:text-xl font-medium">
           Where pixels get fancy and code finds its rhythm. 💃
-        </motion.p>
+        </p>
       </div>
 
-      {/* 🧩 Projects Grid */}
       <div className="w-full flex flex-col gap-16 md:gap-32 pb-20">
         <ProjectCard
           name="Pawsky Wawsky"
           desc="Find your next furry soulmate. We designed a pet discovery experience that's as warm and fuzzy as a puppy's ears."
           tags={["E-Commerce", "UX/UI", "Brand Identity"]}
-          videoSrc={[
-            "/videos/final-pawsky.mp4",
-            "/videos/pawsky-babies.mp4",
-          ]}
-          link={[
-              "/videos/final-pawsky.mp4",
-              "/videos/pawsky-babies.mp4",
-          ]}
+          videoSrc={["/videos/final-pawsky.mp4", "/videos/pawsky-babies.mp4"]}
+          link={["/videos/final-pawsky.mp4", "/videos/pawsky-babies.mp4"]}
           pageTitles={["Home Showcase", "Pet Gallery"]}
           videoPaddingTop="2rem"
         />
