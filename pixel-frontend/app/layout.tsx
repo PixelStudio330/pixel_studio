@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import Pixy from "./components/Pixy"; // client component
+import Pixy from "./components/Pixy"; 
+import { Providers } from "./components/Providers"; // Import the provider wrapper
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +21,6 @@ export const metadata: Metadata = {
   description: "Modern web experiences built with style and speed 💫",
 };
 
-// RootLayout must be a **Server Component** (do NOT put 'use client' here)
 export default function RootLayout({
   children,
 }: {
@@ -31,11 +31,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#FFF8F3] text-[#442D1C]`}
       >
-        <Header />
-        <main className="pt-20">{children}</main>
-        <Footer />
-        {/* Client Component Pixy is fine here */}
-        <Pixy />
+        {/* Wrap everything in Providers so Auth works everywhere! */}
+        <Providers>
+          <Header />
+          <main className="pt-20">{children}</main>
+          <Footer />
+          <Pixy />
+        </Providers>
       </body>
     </html>
   );
