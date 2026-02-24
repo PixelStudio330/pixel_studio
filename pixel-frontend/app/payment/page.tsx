@@ -1,11 +1,20 @@
 "use client";
 
+import React, { useEffect } from "react"; // Added useEffect
 import { motion } from "framer-motion";
 import SparkleTrail from "../components/SparkleTrail";
 import { Wallet, Landmark, Wrench, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+// ✅ Next.js 15 Config: Ensure the page is always fresh
+export const dynamic = 'force-dynamic';
+
 export default function PaymentPage() {
+  // ✅ Force scroll to top on refresh/load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#D9E0A4] text-[#743014] flex flex-col items-center p-10 relative overflow-hidden">
 

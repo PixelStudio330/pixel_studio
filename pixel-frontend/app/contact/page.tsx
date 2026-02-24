@@ -1,13 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Added useEffect
 import { motion } from "framer-motion";
 import { Mail, Send, MessageSquare, User, Image as ImageIcon } from "lucide-react";
 import SparkleTrail from "../components/SparkleTrail";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic"; // Renamed to avoid conflict with 'export const dynamic'
 import Toast from "../components/Toast";
 
-const Doodles = dynamic(() => import("../components/Doodles"), { ssr: false });
+// ✅ Next.js 15 Config: Ensure fresh data on every visit
+export const dynamic = 'force-dynamic';
+
+// Load Doodles only on client side
+const Doodles = nextDynamic(() => import("../components/Doodles"), { ssr: false });
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -15,6 +19,11 @@ export default function ContactPage() {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type?: "success" | "error" } | null>(null);
+
+  // ✅ Force scroll to top on page load/refresh
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,7 +38,6 @@ export default function ContactPage() {
   };
 
   const handleSubmit = async () => {
-    // 1. Client-side validation
     if (!form.name || !form.email || !form.message) {
       setToast({ message: "Fill all fields, you cute clown 😭", type: "error" });
       return;
@@ -38,7 +46,6 @@ export default function ContactPage() {
     setLoading(true);
 
     try {
-      // 2. Prepare FormData (Matches your route.ts req.formData() expectation)
       const formData = new FormData();
       formData.append("name", form.name);
       formData.append("email", form.email);
@@ -48,10 +55,8 @@ export default function ContactPage() {
         formData.append("image", image);
       }
 
-      // 3. Post to the internal Next.js API route
       const res = await fetch("/api/send-email", {
         method: "POST",
-        // Note: Do NOT add headers here. The browser sets the multipart boundary automatically.
         body: formData, 
       });
 
@@ -59,7 +64,6 @@ export default function ContactPage() {
 
       if (res.ok && data.success) {
         setToast({ message: "Message sent successfully! 💌✨", type: "success" });
-        // Reset form
         setForm({ name: "", email: "", message: "" });
         setImage(null);
         setPreview(null);

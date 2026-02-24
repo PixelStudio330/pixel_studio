@@ -1,16 +1,19 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, LogIn, ArrowRight } from "lucide-react";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic"; // Renamed to avoid conflict with 'export const dynamic'
 import SparkleTrail from "../components/SparkleTrail";
 
-// Load Doodles only on client side to match Contact Page
-const Doodles = dynamic(() => import("../components/Doodles"), { ssr: false });
+// ✅ Next.js 15 Config: Ensure fresh data on refresh
+export const dynamic = 'force-dynamic';
+
+// Load Doodles only on client side
+const Doodles = nextDynamic(() => import("../components/Doodles"), { ssr: false });
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -18,6 +21,11 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // ✅ Force scroll to top on refresh
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +40,7 @@ export default function RegisterPage() {
       });
 
       if (res.ok) {
+        // Redirect to the login page after successful registration
         router.push("/api/auth/signin"); 
       } else {
         const data = await res.json();
@@ -70,7 +79,7 @@ export default function RegisterPage() {
           <p className="text-[#8A6674] font-medium">Create your creative sanctuary</p>
         </div>
 
-        {/* Google Auth - The Professional Way */}
+        {/* Google Auth */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -82,8 +91,12 @@ export default function RegisterPage() {
         </motion.button>
 
         <div className="relative mb-8">
-          <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-[#8A6674]/20"></span></div>
-          <div className="relative flex justify-center text-xs uppercase"><span className="bg-[#EBF1C2] px-3 text-[#8A6674] font-bold">Or use email</span></div>
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-[#8A6674]/20"></span>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-[#EBF1C2] px-3 text-[#8A6674] font-bold">Or use email</span>
+          </div>
         </div>
 
         {/* Manual Form */}
@@ -151,7 +164,7 @@ export default function RegisterPage() {
         </div>
       </motion.div>
 
-      {/* Decorative Bottom Divider like Contact Page */}
+      {/* Decorative Bottom Divider */}
       <div className="absolute bottom-10 left-0 w-full text-center text-[#8A6674] text-2xl opacity-50 pointer-events-none">
         ︵‿︵‿୨♡୧‿︵‿︵
       </div>

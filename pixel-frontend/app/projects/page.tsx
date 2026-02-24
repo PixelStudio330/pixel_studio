@@ -1,19 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Added useEffect
 import Link from "next/link";
 import { motion } from "framer-motion";
 import SparkleTrail from "../components/SparkleTrail";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
+// ✅ Ensure fresh data and correct behavior on Vercel
+export const dynamic = 'force-dynamic';
+
 interface ProjectCardProps {
   name: string;
   desc: string;
   tags: string[];
-  videoSrc?: string | string[]; // can be single video or multiple
-  link?: string | string[]; // corresponding link(s)
+  videoSrc?: string | string[]; 
+  link?: string | string[]; 
   videoPaddingTop?: string;
-  pageTitles?: string[]; // for carousel pages
+  pageTitles?: string[]; 
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -31,16 +34,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 
   const handlePrev = () => {
     if (!isCarousel) return;
-    setCurrentIndex((prev) => (prev - 1 + videoSrc.length) % videoSrc.length);
+    setCurrentIndex((prev) => (prev - 1 + (videoSrc as string[]).length) % (videoSrc as string[]).length);
   };
 
   const handleNext = () => {
     if (!isCarousel) return;
-    setCurrentIndex((prev) => (prev + 1) % videoSrc.length);
+    setCurrentIndex((prev) => (prev + 1) % (videoSrc as string[]).length);
   };
 
-  const currentVideo = isCarousel ? videoSrc[currentIndex] : videoSrc;
-  const currentLink = isCarousel && Array.isArray(link) ? link[currentIndex] : link;
+  const currentVideo = isCarousel ? (videoSrc as string[])[currentIndex] : videoSrc as string;
+  const currentLink = isCarousel && Array.isArray(link) ? link[currentIndex] : link as string;
   const currentTitle = isCarousel && pageTitles ? pageTitles[currentIndex] : "";
 
   return (
@@ -76,9 +79,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </>
         )}
 
-        {currentVideo ? (
+        {currentVideo && currentVideo !== "#" ? (
           <motion.video
-            key={currentIndex} // ensure animation on slide
+            key={currentIndex} 
             src={currentVideo}
             autoPlay
             loop
@@ -114,9 +117,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* 🌐 Button */}
-        {currentLink ? (
+        {currentLink && currentLink !== "#" ? (
           <Link
-            href="#"
+            href={currentLink}
             target="_blank"
             className="mt-6 inline-block text-center bg-[#8C5383] text-[#FFF8F3] font-semibold px-6 py-2 rounded-full hover:bg-[#743014] transition-all duration-300 shadow-md"
           >
@@ -133,10 +136,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 };
 
 export default function ProjectsPage() {
+  // ✅ Force scroll to top on refresh
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-24 px-6 md:px-12 relative overflow-hidden flex flex-col items-center space-y-16">
 
-      {/* ✨ Sparkle Trail */}
       <SparkleTrail />
 
       {/* 🌸 Floating Icons */}
@@ -188,7 +195,7 @@ export default function ProjectsPage() {
         A peek into our world — where design flirts with code and ideas sparkle like glitter 💅
       </motion.p>
 
-      {/* 🧩 Stacked Projects */}
+      {/* 🧩 Projects */}
       <ProjectCard
         name="Pawsky Wawsky"
         desc="A cozy sanctuary to find your best pet buddy built with a playful yet premium UI."
@@ -199,8 +206,13 @@ export default function ProjectsPage() {
           "#",
           "#",
         ]}
-        link="/videos/final-pawsky.mp4"
-         pageTitles={["Home", "Know Our Babies", "About", "Contact"]}
+        link={[
+            "/videos/final-pawsky.mp4",
+            "/videos/pawsky-babies.mp4",
+            "#",
+            "#"
+        ]}
+        pageTitles={["Home", "Know Our Babies", "About", "Contact"]}
         videoPaddingTop="2rem"
       />
 
@@ -216,11 +228,11 @@ export default function ProjectsPage() {
           "/videos/sugar-contact.mp4",
         ]}
         link={[
-          "/videos/page1.mp4",
-          "/videos/page2.mp4",
-          "/videos/page3.mp4",
-          "/videos/page4.mp4",
-          "/videos/page5.mp4",
+          "/videos/sugar.mp4",
+          "/videos/sugar-about.mp4",
+          "/videos/reviews-sugar.mp4",
+          "/videos/sugar-offer.mp4",
+          "/videos/sugar-contact.mp4",
         ]}
         pageTitles={["Home", "About", "Reviews", "Offers", "Contact"]}
         videoPaddingTop="3rem"

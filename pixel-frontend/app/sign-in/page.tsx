@@ -1,13 +1,23 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // Added useEffect
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation"; // Added useRouter for redirecting
+
+// ✅ Ensure the page fetches fresh data on refresh
+export const dynamic = 'force-dynamic';
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const router = useRouter(); // Initialize the router
+
+  // ✅ Force scroll to top on refresh
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,11 +39,12 @@ export default function SignIn() {
 
       const data = await res.json();
       console.log("Logged in:", data);
-      alert("Logged in successfully! ✨");
-
-      // TODO: redirect to dashboard or homepage
+      
+      // ✅ Success! Redirect the user
+      router.push("/dashboard"); 
+      router.refresh(); // Optional: clears cache to show new auth state
+      
     } catch (err: unknown) {
-      // ✅ Fixed 'any' by checking if err is an instance of Error
       if (err instanceof Error) {
         setError(err.message);
       } else {
@@ -100,7 +111,6 @@ export default function SignIn() {
         </form>
 
         <p className="mt-6 text-center text-sm text-[#743014]/80">
-          {/* ✅ Fixed unescaped apostrophe */}
           Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-[#8A6674] font-semibold hover:underline">
             Sign Up
