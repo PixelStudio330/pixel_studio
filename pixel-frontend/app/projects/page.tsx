@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import SparkleTrail from "../components/SparkleTrail";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -36,26 +37,21 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   const currentLink = isCarousel && Array.isArray(link) ? link[currentIndex] : link as string;
   const currentTitle = isCarousel && pageTitles ? pageTitles[currentIndex] : "";
 
-  // 🔥 EFFECT 1: Reset loader when source changes and provide a fallback
+  // Reset loader on video change
   useEffect(() => {
     setIsVideoLoading(true);
-    
-    // Fallback: If video takes longer than 3s, just show it anyway
-    const timer = setTimeout(() => {
-      setIsVideoLoading(false);
-    }, 3000);
-
+    const timer = setTimeout(() => setIsVideoLoading(false), 3000); // 3s Fallback
     return () => clearTimeout(timer);
   }, [currentVideo]);
 
-  // 🔥 EFFECT 2: Force play on source change (crucial for Safari/Mobile)
+  // Force video reload on source change
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.load();
-      videoRef.current.play().catch(() => {
-        // Autoplay was prevented, usually requires user click
-        console.log("Autoplay prevented");
-      });
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => console.log("Autoplay waiting for user interaction"));
+      }
     }
   }, [currentVideo]);
 
@@ -80,7 +76,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         className="relative w-full h-[400px] md:h-[480px] lg:h-[500px] overflow-hidden rounded-t-3xl flex items-start justify-center bg-black"
         style={{ paddingTop: videoPaddingTop || "1.5rem" }}
       >
-        {/* ✨ Loading Overlay */}
         <AnimatePresence>
           {isVideoLoading && currentVideo && currentVideo !== "#" && (
             <motion.div 
@@ -91,8 +86,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
               className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#F4E8D4]"
             >
               <motion.div 
-                animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
+                animate={{ scale: [1, 1.1, 1], opacity: [0.7, 1, 0.7] }}
+                transition={{ repeat: Infinity, duration: 1 }}
                 className="text-[#8C5383] font-bold flex flex-col items-center gap-2"
               >
                 <span className="text-3xl">✨</span>
@@ -102,7 +97,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           )}
         </AnimatePresence>
 
-        {/* Page title overlay */}
         <AnimatePresence mode="wait">
           {currentTitle && (
             <motion.div 
@@ -144,8 +138,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             muted
             playsInline
             preload="auto"
-            onLoadedData={() => setIsVideoLoading(false)} // 🔥 Switched to onLoadedData
-            className={`object-contain w-full h-full pointer-events-none transition-opacity duration-700 ${isVideoLoading ? 'opacity-0' : 'opacity-100'}`}
+            onLoadedData={() => setIsVideoLoading(false)}
+            className={`object-contain w-full h-full pointer-events-none transition-opacity duration-500 ${isVideoLoading ? 'opacity-0' : 'opacity-100'}`}
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-[#8C5383]/40 font-bold text-lg gap-3">
@@ -177,7 +171,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             Visit Project ✨
           </Link>
         ) : (
-          <div className="mt-6 inline-block text-center bg-[#8C5383]/10 text-[#743014]/30 font-semibold px-6 py-3 rounded-full cursor-not-allowed border border-[#8C5383]/20">
+          <div className="mt-6 inline-block text-center bg-[#8C5383]/10 text-[#743014]/30 font-semibold px-6 py-3 rounded-full cursor-not-allowed border border-dashed border-[#8C5383]/20">
             Coming Soon
           </div>
         )}
@@ -187,21 +181,36 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 };
 
 export default function ProjectsPage() {
-  const [pageKey, setPageKey] = useState(0);
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [pageKey, setPageKey] = useState("");
 
   useEffect(() => {
+    // 1. Clear cache and force re-render
+    setPageKey(`projects-${Date.now()}`);
+    setMounted(true);
+    router.refresh();
+
+    // 2. Fix scroll position
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
     window.scrollTo(0, 0);
-    setPageKey(prev => prev + 1);
-  }, []);
+  }, [router]);
+
+  // Prevents Hydration error while forcing the new key
+  if (!mounted) return <div className="min-h-screen bg-[#D9E0A4]" />;
 
   return (
     <main key={pageKey} className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-20 px-4 md:px-12 relative overflow-hidden flex flex-col items-center space-y-12 md:space-y-20">
       <SparkleTrail />
+      
       <div className="text-center z-10 max-w-3xl mt-10">
-        <motion.h1 className="text-5xl md:text-7xl font-black text-[#8C5383] mb-4 tracking-tight">
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-5xl md:text-7xl font-black text-[#8C5383] mb-4 tracking-tight"
+        >
           Our Projects
         </motion.h1>
         <p className="text-[#442D1C]/70 text-lg md:text-xl font-medium">
