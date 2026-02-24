@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react"; // Added useEffect
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Send, MessageSquare, User, Image as ImageIcon } from "lucide-react";
 import SparkleTrail from "../components/SparkleTrail";
-import nextDynamic from "next/dynamic"; // Renamed to avoid conflict with 'export const dynamic'
+import nextDynamic from "next/dynamic"; 
 import Toast from "../components/Toast";
 
-// ✅ Next.js 15 Config: Ensure fresh data on every visit
+// ✅ Next.js 15 Config
 export const dynamic = 'force-dynamic';
 
 // Load Doodles only on client side
@@ -20,9 +20,22 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type?: "success" | "error" } | null>(null);
 
-  // ✅ Force scroll to top on page load/refresh
+  // ✅ FORCED SCROLL RESET (The "Nuclear" Option)
   useEffect(() => {
+    // 1. Disable the browser's attempt to stay at the previous scroll position
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // 2. Immediate jump to top
     window.scrollTo(0, 0);
+
+    // 3. Backup: tiny delay to ensure the DOM has finished painting
+    const timeout = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {

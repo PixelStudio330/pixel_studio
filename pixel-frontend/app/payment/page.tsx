@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react"; // Added useEffect
+import React, { useEffect } from "react"; 
 import { motion } from "framer-motion";
 import SparkleTrail from "../components/SparkleTrail";
 import { Wallet, Landmark, Wrench, ArrowRight } from "lucide-react";
@@ -10,9 +10,22 @@ import Link from "next/link";
 export const dynamic = 'force-dynamic';
 
 export default function PaymentPage() {
-  // ✅ Force scroll to top on refresh/load
+  // ✅ FORCED SCROLL RESET (The "Nuclear" Option)
   useEffect(() => {
+    // 1. Disable the browser's attempt to stay at the previous scroll position
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // 2. Immediate jump to top
     window.scrollTo(0, 0);
+
+    // 3. Backup: ensures the DOM has finished painting before final jump
+    const timeout = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   return (

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from "react"; // Added useEffect
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, LogIn, ArrowRight } from "lucide-react";
-import nextDynamic from "next/dynamic"; // Renamed to avoid conflict with 'export const dynamic'
+import nextDynamic from "next/dynamic";
 import SparkleTrail from "../components/SparkleTrail";
 
 // ✅ Next.js 15 Config: Ensure fresh data on refresh
@@ -22,9 +22,19 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // ✅ Force scroll to top on refresh
+  // ✅ FORCED SCROLL RESET (Consistent with other pages)
   useEffect(() => {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
     window.scrollTo(0, 0);
+
+    const timeout = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,8 +65,11 @@ export default function RegisterPage() {
 
   return (
     <main className="relative min-h-screen bg-[#D9E0A4] flex items-center justify-center px-4 overflow-hidden">
-      {/* Background Decor */}
+      
+      {/* ✨ Sparkle Cursor Trail */}
       <SparkleTrail />
+
+      {/* Background Decor */}
       <div className="absolute inset-0 w-full h-full overflow-hidden opacity-30 pointer-events-none z-0">
         <Doodles />
       </div>
@@ -101,7 +114,7 @@ export default function RegisterPage() {
 
         {/* Manual Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {error && (
               <motion.p 
                 initial={{ opacity: 0, height: 0 }}
@@ -122,6 +135,7 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="you@example.com"
                 className="w-full outline-none bg-transparent text-[#604C39] placeholder:text-gray-400"
+                value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
@@ -136,6 +150,7 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="••••••••"
                 className="w-full outline-none bg-transparent text-[#604C39] placeholder:text-gray-400"
+                value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />

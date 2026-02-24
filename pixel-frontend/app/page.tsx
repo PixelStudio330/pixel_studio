@@ -8,7 +8,7 @@ import Link from "next/link";
 import SparkleTrail from "./components/SparkleTrail";
 import HeroText from "./components/HeroText";
 
-// ✅ This handles the "Next.js 15" specific config for dynamic data fetching
+// ✅ Next.js 15 Config: Ensure the page is always fresh
 export const dynamic = 'force-dynamic';
 
 const Doodles = nextdynamic(() => import("./components/Doodles"), { ssr: false });
@@ -72,9 +72,22 @@ const FloatingTextDivider = () => (
 );
 
 export default function Home() {
-  // ✅ FIX: Force scroll to top on page load/refresh
+  // ✅ FORCED SCROLL RESET (The "Nuclear" Option)
   useEffect(() => {
+    // 1. Disable browser's native scroll restoration
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // 2. Immediate jump to top
     window.scrollTo(0, 0);
+
+    // 3. Backup jump to handle delayed DOM painting
+    const timeout = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const featuresRef = useRef(null);

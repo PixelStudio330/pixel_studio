@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react"; // Added useEffect
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import SparkleTrail from "../components/SparkleTrail";
@@ -136,9 +136,19 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 };
 
 export default function ProjectsPage() {
-  // ✅ Force scroll to top on refresh
+  // ✅ FORCED SCROLL RESET (The "Nuclear" Option)
   useEffect(() => {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
     window.scrollTo(0, 0);
+
+    const timeout = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, []);
 
   return (
