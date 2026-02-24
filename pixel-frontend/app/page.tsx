@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import nextdynamic from "next/dynamic";
 import { motion, useInView } from "framer-motion";
 import { ArrowRight, Code, Rocket, Zap } from "lucide-react";
@@ -23,7 +23,7 @@ interface FeatureCardProps {
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, desc }) => (
   <motion.div
     whileHover={{ scale: 1.07, rotate: 1, boxShadow: "0 25px 40px rgba(0,0,0,0.2)" }}
-    className="p-10 bg-gradient-to-br from-[#D9E0A4] to-[#EDF3C5] shadow-lg rounded-3xl border border-[#8A6674]/30 hover:border-[#604C39]/50 transition-all duration-300 h-full"
+    className="p-10 bg-gradient-to-br from-[#D9E0A4] to-[#EDF3C5] shadow-lg rounded-3xl border border-[#8A6674]/30 hover:border-[#604C39]/50 transition-all duration-300"
   >
     <motion.div whileHover={{ y: -5 }} className="flex flex-col items-center text-center space-y-5">
       <div className="text-[#8A6674] w-12 h-12 mb-2">{icon}</div>
@@ -43,7 +43,7 @@ interface ServiceCardProps {
 const ServiceCard: React.FC<ServiceCardProps> = ({ icon, title, desc }) => (
   <motion.div
     whileHover={{ scale: 1.07, rotate: 1, boxShadow: "0 25px 40px rgba(0,0,0,0.2)" }}
-    className="p-8 bg-gradient-to-br from-[#D9E0A4] to-[#EDF3C5] rounded-2xl shadow-lg border border-[#8A6674]/20 transition-all duration-300 h-full"
+    className="p-8 bg-gradient-to-br from-[#D9E0A4] to-[#EDF3C5] rounded-2xl shadow-lg border border-[#8A6674]/20 transition-all duration-300"
   >
     <div className="flex flex-col items-center text-center space-y-4">
       <div className="text-[#8A6674] w-12 h-12 mb-2">{icon}</div>
@@ -72,31 +72,32 @@ const FloatingTextDivider = () => (
 );
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false);
+  // ✅ FORCED SCROLL RESET (The "Nuclear" Option)
+  useEffect(() => {
+    // 1. Disable browser's native scroll restoration
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    // 2. Immediate jump to top
+    window.scrollTo(0, 0);
+
+    // 3. Backup jump to handle delayed DOM painting
+    const timeout = setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
   const featuresRef = useRef(null);
   const servicesRef = useRef(null);
 
   const featuresInView = useInView(featuresRef, { once: true, margin: "-100px" });
   const servicesInView = useInView(servicesRef, { once: true, margin: "-100px" });
 
-  // ✅ FORCED SCROLL RESET & HYDRATION FIX
-  useEffect(() => {
-    setMounted(true);
-    
-    if ('scrollRestoration' in history) {
-      history.scrollRestoration = 'manual';
-    }
-
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, []);
-
-  // Prevent stalling by not rendering heavy logic until mounted
-  if (!mounted) {
-    return <div className="min-h-screen bg-[#D9E0A4]" />;
-  }
-
   return (
-    <main className="relative min-h-screen bg-[#D9E0A4] text-[#8C5383] font-sans overflow-x-hidden">
+    <main className="relative min-h-screen bg-[#D9E0A4] text-[#8C5383] font-sans overflow-hidden">
       <SparkleTrail />
 
       {/* ✨ HERO */}
@@ -127,19 +128,23 @@ export default function Home() {
             transition={{ delay: 0.6, duration: 0.7, ease: "easeOut" }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <Link 
+            <motion.a
               href="/contact"
-              className="inline-flex items-center gap-2 bg-[#19485F] text-[#D9E0A4] px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-[#1E5A74] transition-all transform hover:scale-105"
+              whileHover={{ scale: 1.08, rotate: -1 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-2 bg-[#19485F] text-[#D9E0A4] px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-[#1E5A74] transition-all"
             >
               Get Started <ArrowRight size={22} />
-            </Link>
+            </motion.a>
 
-            <Link 
+            <motion.a
               href="/projects"
-              className="inline-flex items-center gap-2 bg-[#8A6674] text-[#FFF8F3] px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-[#604C39] transition-all transform hover:scale-105"
+              whileHover={{ scale: 1.08, rotate: 1 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center gap-2 bg-[#8A6674] text-[#FFF8F3] px-8 py-3 rounded-full font-semibold shadow-xl hover:bg-[#604C39] transition-all"
             >
               View Projects <ArrowRight size={22} />
-            </Link>
+            </motion.a>
           </motion.div>
         </div>
       </section>
@@ -159,17 +164,17 @@ export default function Home() {
         <div className="grid gap-12 md:grid-cols-3">
           {[
             {
-              icon: <Rocket className="w-10 h-10" />,
+              icon: <Rocket className="w-10 h-10 text-[#8A6674]" />,
               title: "Lightning Speed",
               desc: "Every millisecond matters. Our websites are optimized with cutting-edge frameworks and efficient architecture — delivering fast, seamless, and high-performing digital experiences.",
             },
             {
-              icon: <Code className="w-10 h-10" />,
+              icon: <Code className="w-10 h-10 text-[#8A6674]" />,
               title: "Clean Code",
               desc: "We believe elegance starts in the codebase. Built with scalability, clarity, and long-term stability in mind, our code ensures effortless maintenance and flawless performance.",
             },
             {
-              icon: <Zap className="w-10 h-10" />,
+              icon: <Zap className="w-10 h-10 text-[#8A6674]" />,
               title: "Dynamic Energy",
               desc: "From subtle animations to immersive interactivity, we inject personality into every pixel. Expect digital experiences that move, react, and engage — because static websites belong to the past.",
             },
@@ -208,17 +213,17 @@ export default function Home() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
           {[
             {
-              icon: <Rocket className="w-10 h-10" />,
+              icon: <Rocket className="w-10 h-10 text-[#8A6674]" />,
               title: "Web Design",
               desc: "Stunning, responsive websites built with modern UI/UX principles — designed to captivate your audience and elevate your brand presence.",
             },
             {
-              icon: <Code className="w-10 h-10" />,
+              icon: <Code className="w-10 h-10 text-[#8A6674]" />,
               title: "Backend Work",
               desc: "We create sleek, secure, and scalable digital websites that work as good as they look.",
             },
             {
-              icon: <Zap className="w-10 h-10" />,
+              icon: <Zap className="w-10 h-10 text-[#8A6674]" />,
               title: "Brand Strategy",
               desc: "We craft your brand’s digital identity — from logo to color psychology — ensuring every pixel tells your story with impact.",
             },
@@ -257,7 +262,7 @@ export default function Home() {
         <div className="flex justify-center">
           {[{
             title: "Stay tuned for updates!",
-            icon: <Code className="w-10 h-10" />,
+            icon: <Code className="w-10 h-10 text-[#8A6674]" />,
           }].map((course, i) => (
             <motion.div
               key={i}
