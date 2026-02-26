@@ -32,7 +32,6 @@ const Doodles: React.FC = () => {
     return () => window.removeEventListener("resize", updateDimensions);
   }, []);
 
-  // 🎨 Beauty: Thickened strokes and solid fills
   const doodleIcons = useMemo(() => [
     (color: string) => (
       <Star 
@@ -56,7 +55,7 @@ const Doodles: React.FC = () => {
 
   if (!mounted || dimensions.width === 0) return null;
 
-  const numIcons = isMobile ? 10 : 25;
+  const numIcons = isMobile ? 12 : 25;
 
   return (
     <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
@@ -70,24 +69,29 @@ const Doodles: React.FC = () => {
         return (
           <motion.div
             key={i}
-            initial={{ x: startX, y: startY, opacity: 0, rotate: 0, scale: 0.5 }}
+            initial={{ x: startX, y: startY, opacity: 0, scale: 0.5 }}
             animate={{
-              x: [startX, startX + (isMobile ? 50 : 120), startX - (isMobile ? 50 : 120), startX],
-              y: [startY, startY - (isMobile ? 70 : 180), startY + (isMobile ? 70 : 180), startY],
+              x: [startX, startX + (isMobile ? 40 : 100), startX - (isMobile ? 40 : 100), startX],
+              y: [startY, startY - (isMobile ? 60 : 150), startY + (isMobile ? 60 : 150), startY],
               rotate: [0, 180, 360],
-              scale: [0.8, 1.1, 1.1, 0.8], // Subtle "breathing" effect
-              opacity: [0, 1, 1, 0], // 🎨 Brain: Stay fully opaque (1) for the middle of the trip
+              scale: [0.7, 1.1, 1.1, 0.7],
+              // 🎨 Reach full visibility almost immediately and hold it
+              opacity: [0, 1, 1, 0], 
             }}
             transition={{
-              duration: isMobile ? 12 + i : 20 + i, 
+              // 🏎️ Faster base duration for more energy
+              duration: isMobile ? 8 + i : 12 + i, 
               repeat: Infinity,
-              ease: "easeInOut", // Smoother than linear for a "floating" feel
+              ease: "easeInOut",
+              // ✨ Staggered start so they pop in one by one
+              delay: i * 0.15,
+              // 🧠 0% to 10% = Fade in | 10% to 90% = Stay visible | 90% to 100% = Fade out
+              times: [0, 0.1, 0.9, 1], 
             }}
             className="absolute"
             style={{ 
               willChange: "transform",
-              // 🎨 Beauty: Deeper, more solid shadow for a 3D pop
-              filter: "drop-shadow(0 8px 10px rgba(0,0,0,0.25))" 
+              filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.2))" 
             }}
           >
             {DoodleFn(color)}
