@@ -18,8 +18,8 @@ const Doodles: React.FC = () => {
     setMounted(true);
     setIsMobile(window.innerWidth < 768);
 
-    const hero = document.querySelector("#hero-section") as HTMLElement;
     const updateDimensions = () => {
+      const hero = document.querySelector("#hero-section") as HTMLElement;
       if (hero) {
         setDimensions({ width: hero.offsetWidth, height: hero.offsetHeight });
       } else {
@@ -33,25 +33,19 @@ const Doodles: React.FC = () => {
   }, []);
 
   const doodleIcons = useMemo(() => [
-    (color: string) => (
-      <Star 
-        className="w-8 h-8 md:w-12 md:h-12" 
-        style={{ fill: color, stroke: "#FFF", strokeWidth: 2.5 }} 
-      />
-    ),
-    (color: string) => (
-      <Circle 
-        className="w-7 h-7 md:w-10 md:h-10" 
-        style={{ fill: color, stroke: "#FFF", strokeWidth: 2.5 }} 
-      />
-    ),
-    (color: string) => (
-      <Lightning 
-        className="w-8 h-8 md:w-11 md:h-11" 
-        style={{ fill: color, stroke: "#FFF", strokeWidth: 2.5 }} 
-      />
-    ),
+    (color: string) => <Star className="w-8 h-8 md:w-12 md:h-12" style={{ fill: color, stroke: "#FFF", strokeWidth: 2.5 }} />,
+    (color: string) => <Circle className="w-7 h-7 md:w-10 md:h-10" style={{ fill: color, stroke: "#FFF", strokeWidth: 2.5 }} />,
+    (color: string) => <Lightning className="w-8 h-8 md:w-11 md:h-11" style={{ fill: color, stroke: "#FFF", strokeWidth: 2.5 }} />,
   ], []);
+
+  // Pre-calculate positions to avoid "jumpy" initial renders
+  const positions = useMemo(() => {
+    if (dimensions.width === 0) return [];
+    return Array.from({ length: 25 }).map(() => ({
+      x: Math.random() * dimensions.width,
+      y: Math.random() * dimensions.height,
+    }));
+  }, [dimensions]);
 
   if (!mounted || dimensions.width === 0) return null;
 
@@ -59,39 +53,35 @@ const Doodles: React.FC = () => {
 
   return (
     <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
-      {Array.from({ length: numIcons }).map((_, i) => {
+      {positions.slice(0, numIcons).map((pos, i) => {
         const color = ICON_COLORS[i % ICON_COLORS.length];
         const DoodleFn = doodleIcons[i % doodleIcons.length];
-        
-        const startX = Math.random() * dimensions.width;
-        const startY = Math.random() * dimensions.height;
         
         return (
           <motion.div
             key={i}
-            initial={{ x: startX, y: startY, opacity: 0, scale: 0.5 }}
+            initial={{ opacity: 0, scale: 0, x: pos.x, y: pos.y }}
             animate={{
-              x: [startX, startX + (isMobile ? 40 : 100), startX - (isMobile ? 40 : 100), startX],
-              y: [startY, startY - (isMobile ? 60 : 150), startY + (isMobile ? 60 : 150), startY],
+              // Faster, tighter movement loops
+              x: [pos.x, pos.x + (isMobile ? 20 : 40), pos.x - (isMobile ? 20 : 40), pos.x],
+              y: [pos.y, pos.y - (isMobile ? 30 : 60), pos.y + (isMobile ? 30 : 60), pos.y],
               rotate: [0, 180, 360],
-              scale: [0.7, 1.1, 1.1, 0.7],
-              // 🎨 Reach full visibility almost immediately and hold it
+              scale: [0.8, 1.1, 1.1, 0.8],
               opacity: [0, 1, 1, 0], 
             }}
             transition={{
-              // 🏎️ Faster base duration for more energy
-              duration: isMobile ? 8 + i : 12 + i, 
+              // 🚀 CRITICAL: Fast 3-5s loops instead of 12s+
+              duration: isMobile ? 3 + (i % 2) : 4 + (i % 3), 
               repeat: Infinity,
-              ease: "easeInOut",
-              // ✨ Staggered start so they pop in one by one
-              delay: i * 0.15,
-              // 🧠 0% to 10% = Fade in | 10% to 90% = Stay visible | 90% to 100% = Fade out
+              ease: "linear", 
+              // Very short delay so they all appear almost at once
+              delay: i * 0.05, 
               times: [0, 0.1, 0.9, 1], 
             }}
             className="absolute"
             style={{ 
-              willChange: "transform",
-              filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.2))" 
+              transform: 'translateZ(0)', // Force GPU acceleration
+              filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.15))" 
             }}
           >
             {DoodleFn(color)}

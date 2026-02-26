@@ -31,51 +31,27 @@ export default function ContactPage() {
     setPreview(URL.createObjectURL(file));
   };
 
-  // 🛡️ THE BALANCED GATEKEEPER (Clean & Strict)
-  const verifyEmailExists = async (email: string) => {
-    try {
-      const apiKey = process.env.NEXT_PUBLIC_ABSTRACT_API_KEY; 
-      if (!apiKey) return true; 
-
-      const response = await fetch(
-        `https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${email}`
-      );
-      
-      const data = await response.json();
-      
-      const isFormatValid = data.email_deliverability?.is_format_valid;
-      const isSmtpValid = data.email_deliverability?.is_smtp_valid;
-      const qualityScore = data.email_quality?.score || 0;
-
-      // 🛑 Block if format is invalid OR if it fails both SMTP and Quality checks
-      if (!isFormatValid) return false;
-      if (isSmtpValid === false && qualityScore < 0.5) return false;
-      
-      return true;
-    } catch (error) {
-      console.error("Verification Service Error:", error);
-      return true; 
-    }
+  // 🛡️ THE RELIABLE VALIDATOR
+  // No more APIs, no more "undeliverable" glitches. Just pure logic.
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
 
   const handleSubmit = async () => {
+    // 1. Check for empty fields
     if (!form.name || !form.email || !form.message) {
       setToast({ message: "Fill all fields, you cute clown 😭", type: "error" });
       return;
     }
 
-    setLoading(true);
-
-    const isValid = await verifyEmailExists(form.email);
-    
-    if (!isValid) {
-      setLoading(false);
-      setToast({ 
-        message: "That email looks suspicious. Please check for typos! 💌", 
-        type: "error" 
-      });
+    // 2. Check for basic email format
+    if (!isValidEmail(form.email)) {
+      setToast({ message: "Please enter a valid email address! 💌", type: "error" });
       return;
     }
+
+    setLoading(true);
 
     try {
       const formData = new FormData();
@@ -145,7 +121,7 @@ export default function ContactPage() {
                 <input 
                   type="email" 
                   name="email" 
-                  placeholder="realuser@gmail.com" 
+                  placeholder="yourname@gmail.com" 
                   value={form.email} 
                   onChange={handleChange} 
                   className="w-full outline-none bg-transparent text-[#604C39]" 
@@ -193,7 +169,7 @@ export default function ContactPage() {
               onClick={handleSubmit}
               className="w-full bg-[#8A6674] text-[#FFF8F3] px-6 py-4 rounded-full font-semibold hover:bg-[#604C39] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed mt-4"
             >
-              {loading ? "Verifying..." : "Send Message"} <Send size={20} />
+              {loading ? "Sending..." : "Send Message"} <Send size={20} />
             </motion.button>
           </div>
         </motion.div>
