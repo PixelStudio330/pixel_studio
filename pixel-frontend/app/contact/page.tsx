@@ -34,40 +34,36 @@ export default function ContactPage() {
     setPreview(URL.createObjectURL(file));
   };
 
-  // 🛡️ THE CORPORATE GATEKEEPER
+  // 🛡️ THE IMPROVED GATEKEEPER
   const verifyEmailExists = async (email: string) => {
     try {
       const apiKey = process.env.NEXT_PUBLIC_ABSTRACT_API_KEY; 
       
-      // If you haven't pushed the key to Vercel yet, it will skip this and let you test.
       if (!apiKey) {
-        console.warn("API Key missing! Skipping verification for now.");
+        console.warn("API Key missing! Skipping verification.");
         return true; 
       }
 
-      // We call the Abstract Email Reputation API
       const response = await fetch(
         `https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${email}`
       );
       
       const data = await response.json();
       
-      // 🧠 Based on your JSON output: 
-      // We check if the email_deliverability status is exactly "deliverable"
-      const isDeliverable = data.email_deliverability?.status === "deliverable";
+      // 🧠 NEW LOGIC: 
+      // Instead of requiring "deliverable", we only block if it's "undeliverable".
+      // If it's "unknown", we let it through because it's likely a real email with a slow server.
+      const isDefinitelyFake = data.email_deliverability?.status === "undeliverable";
       
-      // Bonus: Check if it's a "risky" domain or a "breached" record if you want to be extra strict.
-      // For now, "deliverable" is the perfect balance for a real user.
-      return isDeliverable;
+      return !isDefinitelyFake;
 
     } catch (error) {
       console.error("Verification Service Error:", error);
-      return true; // Fallback: Don't block users if Abstract API is down or limit is hit
+      return true; // Fallback: Let them through if the API fails
     }
   };
 
   const handleSubmit = async () => {
-    // Basic field check
     if (!form.name || !form.email || !form.message) {
       setToast({ message: "Fill all fields, you cute clown 😭", type: "error" });
       return;
@@ -75,13 +71,13 @@ export default function ContactPage() {
 
     setLoading(true);
 
-    // 🕵️‍♂️ REAL-TIME PING TO GOOGLE SERVERS
-    const isRealEmail = await verifyEmailExists(form.email);
+    // 🕵️‍♂️ REAL-TIME PING
+    const isValid = await verifyEmailExists(form.email);
     
-    if (!isRealEmail) {
+    if (!isValid) {
       setLoading(false);
       setToast({ 
-        message: "That email address is invalid or doesn't exist. Typos happen! 💌", 
+        message: "That email address is definitely invalid. Please check for typos! 💌", 
         type: "error" 
       });
       return;
@@ -94,7 +90,6 @@ export default function ContactPage() {
       formData.append("message", form.message);
       if (image) formData.append("image", image);
 
-      // Sending to your actual email API route
       const res = await fetch("/api/send-email", { method: "POST", body: formData });
       const data = await res.json();
 
@@ -119,7 +114,6 @@ export default function ContactPage() {
     <main className="relative min-h-screen bg-[#D9E0A4] text-[#8C5383] overflow-hidden">
       <SparkleTrail />
 
-      {/* Hero-like background doodles */}
       <div className="absolute inset-0 w-full h-full overflow-hidden opacity-40 pointer-events-none z-0">
         <Doodles />
       </div>
@@ -139,10 +133,9 @@ export default function ContactPage() {
           className="w-full max-w-xl bg-gradient-to-br from-[#EDF3C5] to-[#D9E0A4] rounded-3xl shadow-xl p-10 border border-[#8A6674]/30"
         >
           <div className="space-y-6">
-            {/* NAME */}
             <div className="text-left">
               <label className="block text-[#604C39] font-semibold mb-2 ml-1">Name</label>
-              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20 focus-within:border-[#8A6674] transition-all">
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20 focus-within:border-[#8A6674] transition-all shadow-sm">
                 <User className="text-[#8A6674]" size={20} />
                 <input 
                   type="text" 
@@ -155,10 +148,9 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* EMAIL */}
             <div className="text-left">
               <label className="block text-[#604C39] font-semibold mb-2 ml-1">Email Address</label>
-              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20 focus-within:border-[#8A6674] transition-all">
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20 focus-within:border-[#8A6674] transition-all shadow-sm">
                 <Mail className="text-[#8A6674]" size={20} />
                 <input 
                   type="email" 
@@ -171,10 +163,9 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* MESSAGE */}
             <div className="text-left">
               <label className="block text-[#604C39] font-semibold mb-2 ml-1">Message</label>
-              <div className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20 focus-within:border-[#8A6674] transition-all">
+              <div className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20 focus-within:border-[#8A6674] transition-all shadow-sm">
                 <MessageSquare className="text-[#8A6674] mt-1" size={20} />
                 <textarea 
                   name="message" 
@@ -186,7 +177,6 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* ATTACHMENT */}
             <div className="text-left">
               <label className="block text-[#604C39] font-semibold mb-2 ml-1">Attachment (optional)</label>
               <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20">
@@ -219,7 +209,6 @@ export default function ContactPage() {
         </motion.div>
       </section>
 
-      {/* Decorative divider */}
       <motion.div
         animate={{ y: [0, -5, 0, 5, 0] }}
         transition={{ duration: 4, repeat: Infinity }}
