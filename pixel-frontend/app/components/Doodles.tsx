@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Star, Circle, Zap as Lightning } from "lucide-react";
 
-// 🎨 Playful icon palette
 const ICON_COLORS = [
   "#8A6674", "#7D99A3", "#FFCDC1", "#D7E7C3", "#8C5383",
   "#19485F", "#D9E0A4", "#604C39", "#99A285", "#7B3B4B", "#D6A53C",
@@ -13,99 +12,74 @@ const ICON_COLORS = [
 const Doodles: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const hero = document.querySelector("#hero-section") as HTMLElement;
-    if (hero) setDimensions({ width: hero.offsetWidth, height: hero.offsetHeight });
+    
+    // Check if we are on mobile to reduce "Icon Tax"
+    setIsMobile(window.innerWidth < 768);
 
-    const handleResize = () => {
-      if (hero) setDimensions({ width: hero.offsetWidth, height: hero.offsetHeight });
+    const hero = document.querySelector("#hero-section") as HTMLElement;
+    const updateDimensions = () => {
+      if (hero) {
+        setDimensions({ width: hero.offsetWidth, height: hero.offsetHeight });
+      } else {
+        // Fallback to window if hero isn't found immediately
+        setDimensions({ width: window.innerWidth, height: window.innerHeight });
+      }
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
   }, []);
+
+  // 🧠 Brain: Memoize the icons so they don't "re-roll" on every tiny state change
+  const doodleIcons = useMemo(() => [
+    (color: string) => <Star className="w-8 h-8 md:w-11 md:h-11" style={{ fill: color, stroke: "#FFF", strokeWidth: 2 }} />,
+    (color: string) => <Circle className="w-7 h-7 md:w-10 md:h-10" style={{ fill: color, stroke: "#FFF", strokeWidth: 2 }} />,
+    (color: string) => <Lightning className="w-7 h-7 md:w-10 md:h-10" style={{ fill: color, stroke: "#FFF", strokeWidth: 2 }} />,
+  ], []);
 
   if (!mounted || dimensions.width === 0) return null;
 
-  const numIcons = 25;
-
-  const doodleArray = [
-    (color: string) => (
-      <Star
-        className="w-11 h-11 drop-shadow-lg"
-        style={{
-          fill: color,
-          stroke: "#FFFFFF",
-          strokeWidth: 2,
-          filter: "drop-shadow(0 0 6px rgba(255,255,255,0.3))",
-        }}
-      />
-    ),
-    (color: string) => (
-      <Circle
-        className="w-10 h-10 drop-shadow-lg"
-        style={{
-          fill: color,
-          stroke: "#FFFFFF",
-          strokeWidth: 2,
-          filter: "drop-shadow(0 0 6px rgba(255,255,255,0.3))",
-        }}
-      />
-    ),
-    (color: string) => (
-      <Lightning
-        className="w-10 h-10 drop-shadow-lg"
-        style={{
-          fill: color,
-          stroke: "#FFFFFF",
-          strokeWidth: 2,
-          filter: "drop-shadow(0 0 6px rgba(255,255,255,0.3))",
-        }}
-      />
-    ),
-  ];
-
-  const randomPosition = () => ({
-    x: Math.random() * dimensions.width,
-    y: Math.random() * dimensions.height,
-  });
+  // 🧠 Beauty with Brain: 25 icons on PC, but only 10 on Mobile to prevent crashing
+  const numIcons = isMobile ? 10 : 25;
 
   return (
     <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
       {Array.from({ length: numIcons }).map((_, i) => {
-        const color = ICON_COLORS[Math.floor(Math.random() * ICON_COLORS.length)];
-        const doodleFn = doodleArray[Math.floor(Math.random() * doodleArray.length)];
-        const startPos = randomPosition();
-        const midPos1 = randomPosition();
-        const midPos2 = randomPosition();
-
+        const color = ICON_COLORS[i % ICON_COLORS.length];
+        const DoodleFn = doodleIcons[i % doodleIcons.length];
+        
+        // Randomize initial stats
+        const startX = Math.random() * dimensions.width;
+        const startY = Math.random() * dimensions.height;
+        
         return (
           <motion.div
             key={i}
-            initial={{
-              x: startPos.x,
-              y: startPos.y,
-              scale: 0.8 + Math.random() * 0.5,
-              rotate: Math.random() * 360,
-              opacity: 1,
-            }}
+            initial={{ x: startX, y: startY, opacity: 0, rotate: 0 }}
             animate={{
-              x: [startPos.x, midPos1.x, midPos2.x, startPos.x],
-              y: [startPos.y, midPos1.y, midPos2.y, startPos.y],
-              rotate: [0, 360, 720],
-              scale: [0.8, 0.9, 0.8],
-              opacity: 1,
+              // 🧠 Brain: Smaller, tighter movement loops for mobile to save memory
+              x: [startX, startX + (isMobile ? 40 : 100), startX - (isMobile ? 40 : 100), startX],
+              y: [startY, startY - (isMobile ? 60 : 150), startY + (isMobile ? 60 : 150), startY],
+              rotate: [0, 180, 360],
+              opacity: [0, 0.8, 0.8, 0], // Fade in and out to keep it "dreamy"
             }}
             transition={{
-              duration: 20 + Math.random() * 10,
+              duration: isMobile ? 15 + i : 25 + i, // Slower is actually easier on the CPU
               repeat: Infinity,
               ease: "linear",
-              repeatType: "loop",
             }}
             className="absolute"
+            style={{ 
+              willChange: "transform", // 🧠 Brain: Force iOS to use GPU hardware
+              filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))" 
+            }}
           >
-            {doodleFn(color)}
+            {DoodleFn(color)}
           </motion.div>
         );
       })}
