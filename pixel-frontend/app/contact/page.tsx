@@ -4,10 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Send, MessageSquare, User, Image as ImageIcon } from "lucide-react";
 import SparkleTrail from "../components/SparkleTrail";
-import nextDynamic from "next/dynamic"; 
 import Toast from "../components/Toast";
-
-const Doodles = nextDynamic(() => import("../components/Doodles"), { ssr: false });
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -34,15 +31,11 @@ export default function ContactPage() {
     setPreview(URL.createObjectURL(file));
   };
 
-  // 🛡️ THE BALANCED GATEKEEPER
+  // 🛡️ THE BALANCED GATEKEEPER (Clean & Strict)
   const verifyEmailExists = async (email: string) => {
     try {
       const apiKey = process.env.NEXT_PUBLIC_ABSTRACT_API_KEY; 
-      
-      if (!apiKey) {
-        console.warn("API Key missing! Skipping verification.");
-        return true; 
-      }
+      if (!apiKey) return true; 
 
       const response = await fetch(
         `https://emailvalidation.abstractapi.com/v1/?api_key=${apiKey}&email=${email}`
@@ -50,22 +43,18 @@ export default function ContactPage() {
       
       const data = await response.json();
       
-      // 🧠 CORPORATE LOGIC UPDATE:
-      // We look at three key 'Success' signals from your JSON:
       const isFormatValid = data.email_deliverability?.is_format_valid;
       const isSmtpValid = data.email_deliverability?.is_smtp_valid;
       const qualityScore = data.email_quality?.score || 0;
 
-      // 🛑 BLOCK IF: Format is wrong OR (Smtp is invalid AND score is trash)
-      // This allows 'unknown' SMTPs to pass IF the quality score is high (like 0.95)
+      // 🛑 Block if format is invalid OR if it fails both SMTP and Quality checks
       if (!isFormatValid) return false;
       if (isSmtpValid === false && qualityScore < 0.5) return false;
       
       return true;
-
     } catch (error) {
       console.error("Verification Service Error:", error);
-      return true; // Fallback: Don't block users if the API is down
+      return true; 
     }
   };
 
@@ -77,13 +66,12 @@ export default function ContactPage() {
 
     setLoading(true);
 
-    // 🕵️‍♂️ SMART REPUTATION CHECK
     const isValid = await verifyEmailExists(form.email);
     
     if (!isValid) {
       setLoading(false);
       setToast({ 
-        message: "That email looks suspicious or doesn't exist. Please check for typos! 💌", 
+        message: "That email looks suspicious. Please check for typos! 💌", 
         type: "error" 
       });
       return;
@@ -120,15 +108,11 @@ export default function ContactPage() {
     <main className="relative min-h-screen bg-[#D9E0A4] text-[#8C5383] overflow-hidden">
       <SparkleTrail />
 
-      <div className="absolute inset-0 w-full h-full overflow-hidden opacity-40 pointer-events-none z-0">
-        <Doodles />
-      </div>
-
       <section className="relative z-10 flex flex-col items-center justify-center text-center pt-32 px-6 md:px-10">
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-6xl font-extrabold text-[#604C39] mb-6"
+          className="text-4xl md:text-6xl font-extrabold text-[#604C39] mb-8"
         >
           Get In Touch 🌿
         </motion.h1>
@@ -136,12 +120,12 @@ export default function ContactPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-xl bg-gradient-to-br from-[#EDF3C5] to-[#D9E0A4] rounded-3xl shadow-xl p-10 border border-[#8A6674]/30"
+          className="w-full max-w-xl bg-gradient-to-br from-[#EDF3C5] to-[#D9E0A4] rounded-3xl shadow-xl p-10 border border-[#8A6674]/20"
         >
           <div className="space-y-6">
             <div className="text-left">
               <label className="block text-[#604C39] font-semibold mb-2 ml-1">Name</label>
-              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20 focus-within:border-[#8A6674] transition-all shadow-sm">
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/10 focus-within:border-[#8A6674] transition-all shadow-sm">
                 <User className="text-[#8A6674]" size={20} />
                 <input 
                   type="text" 
@@ -156,7 +140,7 @@ export default function ContactPage() {
 
             <div className="text-left">
               <label className="block text-[#604C39] font-semibold mb-2 ml-1">Email Address</label>
-              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20 focus-within:border-[#8A6674] transition-all shadow-sm">
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/10 focus-within:border-[#8A6674] transition-all shadow-sm">
                 <Mail className="text-[#8A6674]" size={20} />
                 <input 
                   type="email" 
@@ -171,7 +155,7 @@ export default function ContactPage() {
 
             <div className="text-left">
               <label className="block text-[#604C39] font-semibold mb-2 ml-1">Message</label>
-              <div className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20 focus-within:border-[#8A6674] transition-all shadow-sm">
+              <div className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/10 focus-within:border-[#8A6674] transition-all shadow-sm">
                 <MessageSquare className="text-[#8A6674] mt-1" size={20} />
                 <textarea 
                   name="message" 
@@ -185,7 +169,7 @@ export default function ContactPage() {
 
             <div className="text-left">
               <label className="block text-[#604C39] font-semibold mb-2 ml-1">Attachment (optional)</label>
-              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/20">
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/10">
                 <ImageIcon className="text-[#8A6674]" size={20} />
                 <input 
                   type="file" 
