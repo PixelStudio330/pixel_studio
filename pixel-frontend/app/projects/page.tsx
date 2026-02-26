@@ -27,7 +27,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVideoLoading, setIsVideoLoading] = useState(true);
-  const [isInView, setIsInView] = useState(false); // 🧠 Brain: Track visibility
+  const [isInView, setIsInView] = useState(false); 
   const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const isCarousel = Array.isArray(videoSrc);
@@ -36,21 +36,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   const currentLink = isCarousel && Array.isArray(link) ? link[currentIndex] : link as string;
   const currentTitle = isCarousel && pageTitles ? pageTitles[currentIndex] : "";
 
-  // 🧠 Brain: Only load video when card is in viewport
+  // 🧠 Brain: Priority loading for the first project, lazy for others
   useEffect(() => {
+    if (name === "Pawsky Wawsky") {
+      setIsInView(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsInView(true);
-          observer.disconnect(); // Once loaded, keep it loaded
+          observer.disconnect();
         }
       },
-      { rootMargin: "200px" } // Start loading 200px before it scrolls into view
+      { rootMargin: "400px" } // Load much earlier
     );
 
     if (cardRef.current) observer.observe(cardRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [name]);
 
   useEffect(() => {
     setIsVideoLoading(true);
@@ -59,12 +64,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!isCarousel) return;
+    setIsVideoLoading(true);
     setCurrentIndex((prev) => (prev - 1 + (videoSrc as string[]).length) % (videoSrc as string[]).length);
   };
 
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!isCarousel) return;
+    setIsVideoLoading(true);
     setCurrentIndex((prev) => (prev + 1) % (videoSrc as string[]).length);
   };
 
@@ -104,17 +111,22 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
         )}
 
-        {/* 🧠 Brain: Only render the video tag and src if isInView is true */}
         {isInView && currentVideo && currentVideo !== "#" ? (
           <video
             ref={videoRef}
             key={currentVideo} 
-            src={currentVideo}
-            autoPlay loop muted playsInline 
-            preload="metadata" // 🧠 Brain: Don't choke the network
-            onCanPlayThrough={() => setIsVideoLoading(false)}
-            className={`object-contain w-full h-full transition-opacity duration-700 ${isVideoLoading ? 'opacity-0' : 'opacity-100'}`}
-          />
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            // 🧠 Brain: Priority for first project, lazy for others
+            preload={name === "Pawsky Wawsky" ? "auto" : "metadata"}
+            // 🧠 Brain: onLoadedData is LIGHTNING fast compared to onCanPlayThrough
+            onLoadedData={() => setIsVideoLoading(false)}
+            className={`object-contain w-full h-full transition-opacity duration-500 ${isVideoLoading ? 'opacity-0' : 'opacity-100'}`}
+          >
+             <source src={currentVideo} type="video/mp4" />
+          </video>
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-[#8C5383]/40 font-bold text-lg">
             {!isInView ? "Waiting to shine..." : "Coming Soon"}
