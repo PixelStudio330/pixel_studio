@@ -34,7 +34,7 @@ export default function ContactPage() {
     setPreview(URL.createObjectURL(file));
   };
 
-  // 🛡️ THE IMPROVED GATEKEEPER
+  // 🛡️ THE BALANCED GATEKEEPER
   const verifyEmailExists = async (email: string) => {
     try {
       const apiKey = process.env.NEXT_PUBLIC_ABSTRACT_API_KEY; 
@@ -50,16 +50,22 @@ export default function ContactPage() {
       
       const data = await response.json();
       
-      // 🧠 NEW LOGIC: 
-      // Instead of requiring "deliverable", we only block if it's "undeliverable".
-      // If it's "unknown", we let it through because it's likely a real email with a slow server.
-      const isDefinitelyFake = data.email_deliverability?.status === "undeliverable";
+      // 🧠 CORPORATE LOGIC UPDATE:
+      // We look at three key 'Success' signals from your JSON:
+      const isFormatValid = data.email_deliverability?.is_format_valid;
+      const isSmtpValid = data.email_deliverability?.is_smtp_valid;
+      const qualityScore = data.email_quality?.score || 0;
+
+      // 🛑 BLOCK IF: Format is wrong OR (Smtp is invalid AND score is trash)
+      // This allows 'unknown' SMTPs to pass IF the quality score is high (like 0.95)
+      if (!isFormatValid) return false;
+      if (isSmtpValid === false && qualityScore < 0.5) return false;
       
-      return !isDefinitelyFake;
+      return true;
 
     } catch (error) {
       console.error("Verification Service Error:", error);
-      return true; // Fallback: Let them through if the API fails
+      return true; // Fallback: Don't block users if the API is down
     }
   };
 
@@ -71,13 +77,13 @@ export default function ContactPage() {
 
     setLoading(true);
 
-    // 🕵️‍♂️ REAL-TIME PING
+    // 🕵️‍♂️ SMART REPUTATION CHECK
     const isValid = await verifyEmailExists(form.email);
     
     if (!isValid) {
       setLoading(false);
       setToast({ 
-        message: "That email address is definitely invalid. Please check for typos! 💌", 
+        message: "That email looks suspicious or doesn't exist. Please check for typos! 💌", 
         type: "error" 
       });
       return;
