@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import SparkleTrail from "../components/SparkleTrail";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
-// Removed router.refresh() and pageKey randomization to stop the stalling.
+// ✅ Next.js 15 Config
+export const dynamic = 'force-dynamic';
 
 interface ProjectCardProps {
   name: string;
@@ -36,17 +37,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   const currentLink = isCarousel && Array.isArray(link) ? link[currentIndex] : link as string;
   const currentTitle = isCarousel && pageTitles ? pageTitles[currentIndex] : "";
 
+  // Reset loading state when the source changes
   useEffect(() => {
     setIsVideoLoading(true);
-    const timer = setTimeout(() => setIsVideoLoading(false), 3000); 
-    return () => clearTimeout(timer);
-  }, [currentVideo]);
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.load();
-      videoRef.current.play().catch(() => {});
-    }
   }, [currentVideo]);
 
   const handlePrev = (e: React.MouseEvent) => {
@@ -58,6 +51,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   const handleNext = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!isCarousel) return;
+    setCurrentIndex((prev) => (prev) % (videoSrc as string[]).length);
     setCurrentIndex((prev) => (prev + 1) % (videoSrc as string[]).length);
   };
 
@@ -73,18 +67,25 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         className="relative w-full h-[400px] md:h-[480px] lg:h-[500px] overflow-hidden rounded-t-3xl flex items-start justify-center bg-black"
         style={{ paddingTop: videoPaddingTop || "1.5rem" }}
       >
+        {/* ✨ LOADER: Stays until onCanPlayThrough fires */}
         <AnimatePresence>
           {isVideoLoading && currentVideo && currentVideo !== "#" && (
             <motion.div 
               key="loader"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
               className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#F4E8D4]"
             >
               <div className="text-[#8C5383] font-bold flex flex-col items-center gap-2">
-                <span className="text-3xl animate-bounce">✨</span>
-                <span className="tracking-widest text-xs uppercase">Loading...</span>
+                <motion.span 
+                  animate={{ scale: [1, 1.2, 1] }} 
+                  transition={{ repeat: Infinity, duration: 1.5 }}
+                  className="text-3xl"
+                >
+                  ✨
+                </motion.span>
+                <span className="tracking-widest text-xs uppercase animate-pulse">Buffering Magic...</span>
               </div>
             </motion.div>
           )}
@@ -106,8 +107,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
 
         {isCarousel && (
           <div className="absolute inset-0 flex items-center justify-between px-4 z-30 pointer-events-none">
-            <button onClick={handlePrev} className="pointer-events-auto bg-[#8C5383]/80 text-white p-3 rounded-full transition-all active:scale-90"><FaChevronLeft size={18} /></button>
-            <button onClick={handleNext} className="pointer-events-auto bg-[#8C5383]/80 text-white p-3 rounded-full transition-all active:scale-90"><FaChevronRight size={18} /></button>
+            <button onClick={handlePrev} className="pointer-events-auto bg-[#8C5383]/80 text-white p-3 rounded-full transition-all active:scale-90 hover:bg-[#8C5383]"><FaChevronLeft size={18} /></button>
+            <button onClick={handleNext} className="pointer-events-auto bg-[#8C5383]/80 text-white p-3 rounded-full transition-all active:scale-90 hover:bg-[#8C5383]"><FaChevronRight size={18} /></button>
           </div>
         )}
 
@@ -116,9 +117,14 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
             ref={videoRef}
             key={currentVideo} 
             src={currentVideo}
-            autoPlay loop muted playsInline preload="auto"
-            onLoadedData={() => setIsVideoLoading(false)}
-            className={`object-contain w-full h-full pointer-events-none transition-opacity duration-500 ${isVideoLoading ? 'opacity-0' : 'opacity-100'}`}
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            preload="auto"
+            // ✅ This is the secret sauce: only hide loader when it's ready to play smoothly
+            onCanPlayThrough={() => setIsVideoLoading(false)}
+            className={`object-contain w-full h-full pointer-events-none transition-opacity duration-700 ${isVideoLoading ? 'opacity-0' : 'opacity-100'}`}
           />
         ) : (
           <div className="flex flex-col items-center justify-center w-full h-full text-[#8C5383]/40 font-bold text-lg">Coming Soon</div>
@@ -151,18 +157,16 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Standardize scroll behavior without blocking navigation
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
-  // Use a static key or no key at all to prevent re-mounting the entire page on nav
   if (!mounted) return <div className="min-h-screen bg-[#D9E0A4]" />;
 
   return (
-    <main className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-20 px-4 md:px-12 relative overflow-hidden flex flex-col items-center space-y-12 md:space-y-20">
+    <main className="min-h-screen bg-[#D9E0A4] text-[#8C5383] py-20 px-4 md:px-12 relative overflow-x-hidden flex flex-col items-center space-y-12 md:space-y-20">
       <SparkleTrail />
       
       <div className="text-center z-10 max-w-3xl mt-10">
