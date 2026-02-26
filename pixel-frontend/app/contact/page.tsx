@@ -8,6 +8,7 @@ import Toast from "../components/Toast";
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [honeypot, setHoneypot] = useState(""); // 🍯 The trap state
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,21 +32,27 @@ export default function ContactPage() {
     setPreview(URL.createObjectURL(file));
   };
 
-  // 🛡️ THE RELIABLE VALIDATOR
-  // No more APIs, no more "undeliverable" glitches. Just pure logic.
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
   const handleSubmit = async () => {
-    // 1. Check for empty fields
+    // 🛡️ THE TRAP CHECK
+    // If a human is filling this out, honeypot will be empty. 
+    // If a bot filled it out, we'll pretend it worked but actually do nothing.
+    if (honeypot.length > 0) {
+      console.warn("Bot detected. Silently ignoring submission. 😈");
+      setToast({ message: "Message sent! Talk soon! 💌✨", type: "success" });
+      setForm({ name: "", email: "", message: "" });
+      return;
+    }
+
     if (!form.name || !form.email || !form.message) {
       setToast({ message: "Fill all fields, you cute clown 😭", type: "error" });
       return;
     }
 
-    // 2. Check for basic email format
     if (!isValidEmail(form.email)) {
       setToast({ message: "Please enter a valid email address! 💌", type: "error" });
       return;
@@ -99,6 +106,21 @@ export default function ContactPage() {
           className="w-full max-w-xl bg-gradient-to-br from-[#EDF3C5] to-[#D9E0A4] rounded-3xl shadow-xl p-10 border border-[#8A6674]/20"
         >
           <div className="space-y-6">
+            
+            {/* 🍯 THE HONEYPOT (Invisible to Humans) */}
+            <div className="absolute opacity-0 -z-50 pointer-events-none h-0 w-0 overflow-hidden">
+              <label htmlFor="company_website">Company Website</label>
+              <input
+                id="company_website"
+                type="text"
+                name="company_website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+
             <div className="text-left">
               <label className="block text-[#604C39] font-semibold mb-2 ml-1">Name</label>
               <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#8A6674]/10 focus-within:border-[#8A6674] transition-all shadow-sm">
