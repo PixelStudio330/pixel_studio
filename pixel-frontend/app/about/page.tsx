@@ -7,16 +7,16 @@ import SparkleTrail from "../components/SparkleTrail";
 export default function AboutPage() {
   const team = [
     {
-      name: "Naira Mehjabin",
-      role: "Frontend Developer",
-      photo: "/images/Me.jpg",
-      bio: "Pixel-perfect interfaces with a touch of chaos 💫 Loves coffee and code."
+      name: "Nyra",
+      role: "Fullstack Developer",
+      photo: "/images/nyra.jpg",
+      bio: "The heart and soul of our pixel playground 💻✨ Turning code into magic, one pixel at a time."
     },
     {
-      name: "Gulnahar Zaman",
-      role: "Backend Developer",
-      photo: "/images/ammu.jpg",
-      bio: "Keeps the engines running smoothly ⚡ Enjoys long walks through JSON forests."
+      name: "Nova",
+      role: "CEO/Founder",
+      photo: "/images/nova.jpg",
+      bio: "The visionary behind the pixel magic 🌟 Passionate about creating delightful digital experiences for you."
     }
   ];
 
